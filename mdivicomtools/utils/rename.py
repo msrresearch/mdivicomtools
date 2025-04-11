@@ -9,6 +9,16 @@ from mdivicomtools.utils.logging import setup_logging
 from typing import List, Optional
 
 def sanitize_filename(name):
+    """
+    Cleans and normalizes a filename by removing or replacing disallowed characters, German umlauts,
+    and ensuring the result does not conflict with Windows reserved filenames.
+
+    Args:
+        name (str): Original filename to be sanitized.
+
+    Returns:
+        str: A sanitized, safe filename.
+    """
     # Replace spaces with underscores
     name = name.replace(" ", "_")
     # Remove or replace special characters
@@ -27,15 +37,16 @@ def sanitize_filename(name):
 
 def get_file_list(base_dir: str, omit_hidden: bool = True) -> List[Path]:
     """
-    Recursively retrieves a list of files with full paths from a directory,
-    omitting hidden files, folders, and Git-related content.
+    Recursively retrieve a list of files from a directory, optionally omitting hidden items.
+
+    This function also excludes `.git` directories and hidden files/folders by default.
 
     Args:
-        base_dir (str): The main directory to search in.
-        omit_hidden (bool): Whether to omit hidden files and directories.
+        base_dir (str): Path to the main directory to search.
+        omit_hidden (bool): If True, skip hidden files and directories. Defaults to True.
 
     Returns:
-        List[Path]: A list of paths for all eligible files.
+        List[Path]: A list of paths pointing to all eligible files.
     """
     file_list = []
     base_path = Path(base_dir)
@@ -61,26 +72,23 @@ def transform_path(
         partial_strict: bool = True  # New parameter
 ) -> (Path, bool):
     """
-    Apply find/replace/prefix transformations to a given path and relocate it
-    under the securecopy directory, preserving relative structure.
+    Apply a find/replace/prefix transformation to a given file path, then relocate it under the specified securecopy directory.
 
-    If replace_strings is None, we only add the prefix to the found strings.
-    If replace_strings is not None, we replace each find_string with prefix+corresponding replace_string.
-
-    When partial_strict is True, replacements are applied only for exact word boundaries.
+    If replace_strings is None, only a prefix is added. If replace_strings is provided, each find string is replaced by the corresponding string (prefixed) in replace_strings.
+    Optionally enforces word-boundary matching if partial_strict is True.
 
     Args:
         original_path (Path): The original file path to transform.
-        find_strings (List[str]): List of strings to find in the path.
-        replace_strings (Optional[List[str]]): List of corresponding replacement strings.
+        find_strings (List[str]): A list of strings to search for.
+        replace_strings (Optional[List[str]]): A list of replacement strings, matching indices in find_strings.
         prefix (str): A prefix to prepend to matched strings or replacements.
-        base_dir (Path): The base directory of the original file path.
-        securecopy_dir (Path): The directory where the transformed path will be relocated.
-        partial_strict (bool): If True, only exact word-boundary matches will be replaced.
+        base_dir (Path): The base directory to which original_path is relative.
+        securecopy_dir (Path): Destination directory for the transformed path.
+        partial_strict (bool): If True, only replace exact word-boundary matches.
 
     Returns:
-        Tuple[Path, bool]: The transformed path under the securecopy directory and a
-        warning flag for partial matches.
+        Tuple[Path, bool]: A tuple of (transformed_path, partial_warning), where transformed_path is
+        the new location in the securecopy directory, and partial_warning indicates if partial (non-word-boundary) replacements occurred.
     """
     relative_path = original_path.relative_to(base_dir)
     original_str = str(relative_path)
@@ -135,19 +143,21 @@ def plan_transformations(
         partial_strict: bool = True
 ) -> Dict[Path, Path]:
     """
-    Given a list of paths, plan the transformations and return a dictionary
-    mapping from original_path to new_path, located under a securecopy directory.
+    Build a mapping from original paths to transformed paths based on specified string find/replace rules.
+
+    Each original path is transformed by `transform_path` into a location under the securecopy folder, optionally with strict or partial matching.
 
     Args:
         base_dir (str): The base directory of the original files.
-        paths (List[Path]): The files to transform.
-        find_strings (List[str]): Patterns to find.
-        replace_strings (Optional[List[str]]): Corresponding replacements.
-        prefix (str): Optional prefix to add to the replaced substring.
-        securecopy_folder_name (str): Name of the folder where transformed files will be placed.
+        paths (List[Path]): A list of file paths to transform.
+        find_strings (List[str]): A list of patterns to find.
+        replace_strings (Optional[List[str]]): Corresponding replacements for each pattern.
+        prefix (str): String to prepend to found or replaced segments.
+        securecopy_folder (str): Name of the folder under which transformed files will be placed.
+        partial_strict (bool): If True, only replace exact word-boundary matches.
 
     Returns:
-        Dict[Path, Path]: A mapping of original_path -> transformed_path.
+        Dict[Path, Path]: A dictionary mapping each source path to its transformed path.
     """
     base_path = Path(base_dir)
     securecopy_dir = base_path / securecopy_folder
@@ -171,8 +181,13 @@ def plan_transformations(
 
 def check_for_conflicts(transformation_map: Dict[Path, Path]) -> bool:
     """
-    Check for conflicts in the transformation map, i.e., multiple old paths
-    mapping to the same new path. Returns True if conflicts exist, False if not.
+    Check for conflicts in a transformation map, i.e., multiple old paths mapping to the same new path.
+
+    Args:
+        transformation_map (Dict[Path, Path]): A dictionary of old_path -> new_path.
+
+    Returns:
+        bool: True if conflicts exist (i.e., two or more keys share the same destination path), otherwise False.
     """
     seen = set()  # type: Set[Path]
     for new_p in transformation_map.values():
@@ -188,9 +203,12 @@ def copy_item(
         handle_symlinks: bool = False
 ) -> None:
     """
-    Safely copy a file or a directory from src to dst.
-    If handle_symlinks is True, copy symlinks as symlinks.
-    Otherwise, copy the target file of the symlink.
+    Safely copy a file or directory from src to dst, optionally preserving symlinks.
+
+    Args:
+        src (Path): Source file or directory.
+        dst (Path): Destination path.
+        handle_symlinks (bool): If True, symlinks are recreated as symlinks; otherwise, the link target's content is copied.
     """
     if src.is_dir():
         shutil.copytree(
@@ -216,14 +234,15 @@ def validate_copy(
 ) -> bool:
     #TODO: needs to be tested, gives sometimes validations fails although files are copied correctly
     """
-    Validate that the copied item at dst matches src.
+    Validate that a copied item at dst matches src at a basic level.
+
+    Checks directory-ness, symlink status, or file size. More advanced checks (like checksums) are not performed.
 
     Args:
-        src (Path): The source path.
+        src (Path): The source file or directory.
         dst (Path): The destination path.
-        handle_symlinks (bool): Indicates whether symlinks were copied as symlinks or not.
-        rel_symlink_is_valid (bool): If True, identical symlink text (e.g., '../foo')
-            is considered sufficient to declare the symlink valid. Defaults to True.
+        handle_symlinks (bool): Whether symlinks were copied as symlinks.
+        rel_symlink_is_valid (bool): If True, matching symlink text (e.g., '../foo') is sufficient to consider the symlink valid.
 
     Returns:
         bool: True if basic validation succeeds, False otherwise.
@@ -267,14 +286,14 @@ def apply_transformations(
         sequential_delete: bool = False
 ) -> None:
     """
-    Apply the transformations from the transformation_map.
+    Apply a mapping of old paths to new paths by copying (and optionally deleting) files.
 
     Args:
-        transformation_map (Dict[Path, Path]): Map of old paths to new paths.
-        dryrun (bool): If True, only print actions. If False, actually copy.
-        handle_symlinks (bool): If True, copy symlinks as symlinks. If False, copy their targets.
-        sequential_delete (bool): If True, delete the original files after each successful copy and validation.
-                                  Use with caution!
+        transformation_map (Dict[Path, Path]): The old_path -> new_path mappings.
+        dryrun (bool): If True, only print intended actions without performing them.
+        handle_symlinks (bool): If True, preserve symlinks during copy.
+        sequential_delete (bool): If True, remove the original file after each successful copy and validation.
+                                  Use with caution, as this can result in data loss if validation is insufficient.
     """
     for src, dst in transformation_map.items():
         if dryrun:
@@ -307,9 +326,15 @@ def plan_combine_folder_hierarchies(
         securecopy_folder: Optional[str] = None
 ) -> Dict[Path, Path]:
     """
-    Finds directories matching given hierarchies and plans to combine them.
+    Identify directories matching specified hierarchies and plan to combine each hierarchy into a single directory name.
 
-    If securecopy_folder is provided, the new paths are placed under that folder within root_dir.
+    Args:
+        hierarchies (List[List[str]]): A list of folder hierarchies, each represented as a list of folder names in order.
+        root_dir (str): The base directory to search.
+        securecopy_folder (Optional[str]): If provided, place resulting paths under this folder in root_dir.
+
+    Returns:
+        Dict[Path, Path]: A mapping of original paths to new combined-folder paths.
     """
     root = Path(root_dir)
     transformation_map = {}
@@ -353,8 +378,15 @@ def plan_split_folder_hierarchies(
         securecopy_folder: Optional[str] = None
 ) -> Dict[Path, Path]:
     """
-    Finds directories that match combined patterns and splits them back into hierarchies.
-    If securecopy_folder is provided, the new paths are placed under that folder within root_dir.
+    Reverse the combination of folder hierarchies by splitting directories named with underscores into multiple levels.
+
+    Args:
+        combined_folders (List[str]): Folder names that represent previously combined hierarchies.
+        root_dir (str): The base directory to search.
+        securecopy_folder (Optional[str]): If provided, place resulting paths under this folder in root_dir.
+
+    Returns:
+        Dict[Path, Path]: A mapping of combined-folder paths to newly split hierarchy paths.
     """
     root = Path(root_dir)
     transformation_map = {}
@@ -390,21 +422,19 @@ def plan_prepend_foldernames_to_filename(
         securecopy_folder: Optional[str] = None
 ) -> Dict[Path, Path]:
     """
-    Prepend given folder names to each file's basename, optionally removing these folders from the directory path,
-    but only if all given folder names appear in the original path.
+    Prepend specific folder names to each file's basename, optionally removing those folder names from the directory structure.
 
-    If folderremoval=True and all foldernames are present:
-        e.g. foldernames=["bla1","bla3"]
-        original: bla1/bla2/bla3/bla4/test.txt
-        transformed: bla2/bla4/bla1_bla3_test.txt
+    The transformation occurs only if all specified foldernames appear in the file's path.
 
-    If folderremoval=False and all foldernames are present:
-        original: bla1/bla2/bla3/bla4/test.txt
-        transformed: bla1/bla2/bla3/bla4/bla1_bla3_test.txt
+    Args:
+        file_paths (List[str]): List of file paths to transform.
+        foldernames (List[str]): Folder names to look for and potentially remove/prepend.
+        folderremoval (bool): If True, remove these folders from the path.
+        root_dir (str): The base directory for resolving file paths.
+        securecopy_folder (Optional[str]): If provided, the new paths go under this folder in root_dir.
 
-    If not all foldernames are present, no change is applied.
-
-    If securecopy_folder is provided, the new paths are placed under that folder within root_dir.
+    Returns:
+        Dict[Path, Path]: A mapping of original file paths to new file paths.
     """
     transformation_map = {}
     folder_set = set(foldernames)
@@ -452,20 +482,20 @@ def build_transformation_map_from_df(
     include_non_matches: bool = True  # New argument
 ) -> Dict[Path, Path]:
     """
-    Build a transformation map from a DataFrame that maps original file paths to new file paths,
-    by replacing a directory named after `key_field` with a new name derived from `rename_format`.
+    Construct a mapping of original file paths to renamed paths using a DataFrame.
+
+    The function searches for folders matching a `key_field` from the DataFrame. It replaces that folder with a name built from `rename_format`. Files that do not match can optionally be included.
 
     Args:
-        df (pd.DataFrame): DataFrame with at least `key_field` and fields required by `rename_format`.
-        base_dir (str): Base directory containing the original file structure.
-        key_field (str): Field identifying the directory to rename (default: 'recording_id').
-        rename_format (str): A format string with placeholders (e.g. 'task-{task_id}_run-{run_id}').
-        target_directory (Optional[str]): If provided, transformed directories and files go here.
-                                          Otherwise, a 'securecopy' folder under `base_dir` is used.
-        include_non_matches (bool): If True, include files that do not match the key_field "as is".
+        df (pd.DataFrame): DataFrame containing at least `key_field` and the fields required by `rename_format`.
+        base_dir (str): The root directory containing original file structure.
+        key_field (str): Column name identifying the directory to rename.
+        rename_format (str): Format string with placeholders, e.g. 'task-{task_id}_run-{run_id}'.
+        target_directory (Optional[str]): If provided, place new paths here. Otherwise, use `base_dir`/securecopy.
+        include_non_matches (bool): If True, files with no matching key_field are copied as is.
 
     Returns:
-        Dict[Path, Path]: A mapping of original paths -> new paths.
+        Dict[Path, Path]: A mapping of source paths to renamed paths, or an empty dict if conflicts occur.
     """
     base_path = Path(base_dir)
     if target_directory is not None:
@@ -555,31 +585,19 @@ def plan_complex_file_reorder(
     target_dir: Optional[str] = None
 ) -> Dict[Path, Path]:
     """
-    Builds a transformation map for files only, ignoring directories.
-    Reorders each file's parent folder segments according to source_structure,
-    then places the file in the new location under target_dir (or securecopy_folder).
+    Build a transformation map for files by reordering folder segments according to a source structure and target index.
 
-    We do NOT physically descend into '.git' or 'git annex' directories,
-    but if a symlink outside those folders points into them, it is processed normally.
+    This function supports wildcard placeholders and regex placeholders. Files under .git or 'git annex' directories are skipped.
 
     Args:
-        base_dir (str):
-            The root directory where we locate files.
-        source_structure (List[str]):
-            Blueprint for how folders are currently arranged. E.g.:
-               ["^sub-[a-zA-Z0-9]+$", "^dyad-[a-zA-Z0-9]+$", "<subfolders>"]
-        target_index (List[int]):
-            A human-friendly list (starting at 1) specifying how to reorder
-            the placeholders in source_structure. Example: [2, 3, 1].
-        securecopy_folder (str):
-            If target_dir is not provided, place outputs here under base_dir.
-        target_dir (Optional[str]):
-            An explicit destination directory. If given, overrides securecopy_folder.
+        base_dir (str): Root directory for searching files.
+        source_structure (List[str]): Blueprint for how folders are currently structured, with optional regex or wildcard markers.
+        target_index (List[int]): 1-based indices specifying how to reorder matched placeholders.
+        securecopy_folder (str): If `target_dir` is not given, place outputs here under `base_dir`.
+        target_dir (Optional[str]): If provided, overrides the securecopy_folder location.
 
     Returns:
-        Dict[Path, Path]:
-            Mapping of old_path -> new_path for all files that match the structure.
-            Others are omitted.
+        Dict[Path, Path]: A dictionary mapping each old file path to its reordered new path.
     """
     base_path = Path(base_dir).resolve()
 
@@ -653,15 +671,17 @@ def reorder_path_complex(
     target_index: List[int]
 ) -> Optional[List[str]]:
     """
-    Reorder path segments (folder_parts) according to source_structure + target_index.
-    Returns None if matching fails.
+    Reorder path segments based on a specified source structure and target index.
 
-    Example:
-        folder_parts = ["sub-01A", "dyad-02", "task-conversation_run-01"]
-        source_structure = ["^sub-[a-zA-Z0-9]+$", "^dyad-[a-zA-Z0-9]+", "<subfolders>"]
-        target_index = [1, 2, 0]  # zero-based => placeholders #1, #2, #0 in that order
+    The source structure can contain regex placeholders (one directory) or wildcard placeholders (capture multiple directories). The function extracts these segments from folder_parts, then reassembles them according to target_index.
 
-    This might reorder to: ["dyad-02", "task-conversation_run-01", "sub-01A"].
+    Args:
+        folder_parts (List[str]): The existing folder segments.
+        source_structure (List[str]): List of placeholders (regex or wildcards) describing expected structure.
+        target_index (List[int]): Zero-based indices specifying the order to reassemble placeholders.
+
+    Returns:
+        Optional[List[str]]: The reordered list of folder segments, or None if matching fails.
     """
     captures = {}
     placeholders_in_source = []
@@ -716,8 +736,18 @@ def find_next_pattern_index(
     current_part_index: int
 ) -> int:
     """
-    Find the next position in folder_parts that matches a regex placeholder
-    in source_structure, starting at start_idx. Return len(folder_parts) if none is found.
+    Locate the next position in folder_parts that matches a regex placeholder.
+
+    If no more regex placeholders are found, returns the end of folder_parts to capture everything with a wildcard.
+
+    Args:
+        source_structure (List[str]): The full list of placeholders.
+        start_idx (int): The index in source_structure to begin searching for the next regex placeholder.
+        folder_parts (List[str]): The path segments being evaluated.
+        current_part_index (int): The current index in folder_parts.
+
+    Returns:
+        int: The position where the next regex placeholder match is found, or len(folder_parts) if none is found.
     """
     next_pattern = None
     for placeholder in source_structure[start_idx:]:
