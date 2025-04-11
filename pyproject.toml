@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mdivicomtools"
+version = "0.2"
+description = "Collection of tools for working multimodal data in interaction and communication research"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+  {name = "Martin Schulte-Rüther", email = "martin@schulte-ruether.de"},
+]
+homepage = "https://github.com/msrresearch/mdivicomtools"
+requires-python = ">=3.7"
+
+dependencies = [
+  "requests",
+  "pandas",
+]
+
+[project.urls]
+"Source" = "https://github.com/msrresearch/mdivicomtools"
+"Tracker" = "https://github.com/msrresearch/mdivicomtools/issues"
