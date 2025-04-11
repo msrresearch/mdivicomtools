@@ -1,179 +1,132 @@
 # mdivicomtools
 
-> **Umbrella Repository** for modular, reusable components (submodules). Each submodule is self-contained and can be used independently or integrated into a broader workflow. The current submodules are:
-> 1. **mdivicomutils** – General-purpose utilities (data handling, common helpers).
-> 2. **mdimediaprep** – Tools for processing and analyzing media files.
-> 3. **mdifacetools** – Specialized components for face-detection or face-related tasks.
+**mdivicomtools** is a Python-based package designed for building and running analysis pipelines, specifically tailored for research in multimodal visual communication. It is developed as part of the [mdinteract](https://vicom.info/projects/multimodal-assessment-of-dyadic-interaction-in-disorders-of-social-interaction) project within the DFG Priority Program Visual Communication ([ViCom](https://vicom.info)).
+
+This repository provides core utilities along with modular components integrated via Git submodules, streamlining data processing and analysis workflows.
+
+**Note:** The repository is under active development. Core functionalities are available, with additional features being progressively integrated.
 
 ---
 
-## 1. Overview
+## Quick Start Guide
 
-**mdivicomtools** is a collection of Python submodules focusing on streamlined data/media processing and specialized face-detection tasks. While each submodule can run standalone, this umbrella repository brings them together for integrated usage.
+### Installation for Users
 
-**Submodules (Git Repos)**:
-- [mdivicomutils](https://github.com/yourname/mdivicomutils.git)
-- [mdimediaprep](https://github.com/yourname/mdimediaprep.git)
-- [mdifacetools](https://github.com/yourname/mdifacetools.git)
-
-> **Note**: In the future, “simple users” can install these tools more easily if you publish them to PyPI (e.g. `pip install mdivicomtools`). Currently, this repo is best for developers who want to work with the submodules directly.
-
----
-
-## 2. Quick Start (Developers)
-
-### 2.1. Clone This Repository with Submodules
+1. **Clone the repository (with submodules):**
 
 ```bash
 git clone --recurse-submodules https://github.com/yourname/mdivicomtools.git
+```
 
-If you forget --recurse-submodules:
+If you initially cloned without submodules:
 
+```bash
 cd mdivicomtools
 git submodule update --init --recursive
+```
 
-2.2. Install Submodules (Editable Mode)
+2. **Install dependencies:**
 
-Each submodule manages its own dependencies in a requirements.txt or pyproject.toml. For local development, you can install each submodule in “editable” mode so changes are immediately reflected.
+Use a Python virtual environment (recommended)
 
-# Example:
-pip install -e ./mdivicomutils
-pip install -e ./mdimediaprep
-pip install -e ./mdifacetools
+```bash
+python -m venv venv
+source venv/bin/activate  # on Windows: venv\Scripts\activate
+```
 
-Tip: If you prefer to install all dependencies at once, you can create a top-level requirements.txt referencing each submodule’s file. This is optional; see “Experimental Joint Requirements” below.
+Then install the main utilities and submodules:
 
-⸻
+```bash
+pip install .
+```
 
-3. Working with Submodules
+### Setup for Developers
 
-3.1. Add a New Submodule
+To contribute or develop locally, install modules in editable mode:
 
-git submodule add <url-of-new-module> new-module-folder
+```bash
+pip install -e ./utils
+pip install -e ./tools/mdipplcloud
+pip install -e ./tools/mdimediaprep
+pip install -e ./tools/mdifacetools
+```
 
-Then commit the reference in the umbrella repository:
+---
 
-git add new-module-folder
-git commit -m "chore: add new submodule <module name>"
+## Working with Submodules
+
+### Adding a New Submodule
+
+To add a new submodule as a standalone Python package:
+
+```bash
+git submodule add <repository-url> tools/<new-module-name>
+git commit -m "chore: add new submodule <new-module-name>"
 git push origin main
+```
 
-3.2. Update Submodules
+### Updating Submodules
 
-Pull changes from each submodule’s remote repository:
+To update all submodules to their latest commits:
 
-git submodule update --remote
+```bash
+git submodule update --remote --recursive
+git commit -am "chore: update all submodules"
+git push origin main
+```
 
-If any submodule is on a specific branch, you can:
+To update a specific submodule branch:
 
-cd mdivicomutils
-git checkout <branch>
+```bash
+cd tools/<submodule-name>
+git checkout <branch-name>
 git pull
-
-Then update the pointer in the umbrella repo:
-
-cd ..
-git add mdivicomutils
-git commit -m "chore: update submodule reference for mdivicomutils"
+cd ../..
+git add tools/<submodule-name>
+git commit -m "chore: update submodule <submodule-name> to latest <branch-name>"
 git push origin main
+```
 
-3.3. Committing Changes Inside a Submodule
+---
 
-When you edit a submodule:
+## Example Usage
 
-cd mdivicomutils
-# make changes, then:
-git add .
-git commit -m "feat: add new utility function"
-git push origin <branch>
+Here's a minimal example showing how to combine functionalities across modules:
 
-Afterward, return to the umbrella:
+```python
 
-cd ..
-git add mdivicomutils
-git commit -m "chore: updated mdivicomutils reference in umbrella"
-git push origin main
+```
 
+---
 
+## Contributing
 
-⸻
+Contributions are welcome! Follow these steps:
 
-4. Handling Dependencies
+1. Fork and clone your fork.
+2. Create a feature branch (`git checkout -b feat/<new-feature>`).
+3. Develop and test changes.
+4. Push changes and open a Pull Request.
 
-4.1. Submodule-Specific Requirements
+---
 
-Each submodule has its own requirements.txt or pyproject.toml. Install them individually:
+## Roadmap
 
-cd mdivicomutils
-pip install -r requirements.txt
-cd ../mdimediaprep
-pip install -r requirements.txt
-# ... and so on
+- Expand module features
+- Automated integration testing
+- Publish to PyPI
+- Setup Continuous Integration/Continuous Deployment (CI/CD) via GitHub Actions
 
-4.2. (Optional) Experimental Joint Requirements
+---
 
-You can create a top-level requirements.txt:
+## License
 
-# requirements.txt
--r mdivicomutils/requirements.txt
--r mdimediaprep/requirements.txt
--r mdifacetools/requirements.txt
+This repository is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-Then:
+(c) 2025 Martin Schulte-Rüther and the mdinteract project team
 
-pip install -r requirements.txt
+---
 
-This installs all dependencies in one go. Be mindful of potential version conflicts.
+## Support
 
-⸻
-
-5. Example Usage
-
-Below is a minimal example showing how you might integrate multiple submodules in Python:
-
-# Example: combine functionalities
-
-from mdivicomutils.placeholder import xyz
-from mdimediaprep.placeholder import xyz
-from mdifacetools.placeholder import xyz
-
-# 1) Use a common data helper
-
-# 2) Prepare a video for further analysis
-
-# 3) Detect faces in the processed media
-
-
-
-⸻
-
-6. Contributing
-	1.	Fork and Clone: Fork the main repo, then clone locally with submodules.
-	2.	Create a Branch: git checkout -b feat/awesome-feature
-	3.	Code and Test: Make changes, add tests in each submodule, run them (pytest, etc.).
-	4.	Commit and Push: Commit changes in submodules, then update the umbrella pointer.
-	5.	Pull Request: Open a PR to merge into main.
-
-⸻
-
-7. License
-
-This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
-You may obtain a copy of the License at:
-http://creativecommons.org/licenses/by-nc/4.0/
-
-
-⸻
-
-8. Roadmap
-	1.	Refine Submodule Architectures – Possibly break out specialized modules if they grow large.
-	2.	Automated Testing – Add top-level integration tests for cross-submodule workflows.
-	3.	PyPI Publishing – Provide an easier “pip install mdivicomtools” in the future.
-	4.	CI/CD – Automate building, testing, and release pipelines.
-
-⸻
-
-Questions or Issues?
-
-Please open an issue in this repository or contact the maintainers directly.
-
-⸻
+For questions or issues, please open an issue or contact the maintainers directly.
