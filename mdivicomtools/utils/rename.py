@@ -294,7 +294,16 @@ def apply_transformations(
         handle_symlinks (bool): If True, preserve symlinks during copy.
         sequential_delete (bool): If True, remove the original file after each successful copy and validation.
                                   Use with caution, as this can result in data loss if validation is insufficient.
+                                  WARNING: Enabling this will permanently delete the source files if the copy validation succeeds.
+                                  Ensure you have proper backups before proceeding.
     """
+    if not dryrun and sequential_delete:
+        print("WARNING: sequential_delete is enabled. Source files will be permanently deleted after successful copy and validation. Please ensure you have proper backups!")
+        # aks for user input to continue
+        user_input = input("Do you want to continue? (yes/no): ")
+        if user_input.lower() != "yes":
+            print("Aborting operation.")
+            return
     for src, dst in transformation_map.items():
         if dryrun:
             print(f"DRY RUN: Would copy {src} -> {dst}")

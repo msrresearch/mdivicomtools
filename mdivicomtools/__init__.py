@@ -40,7 +40,8 @@ def vc_rename(base_dir,
         dryrun (bool, optional): If True, prints the planned actions without applying them. Defaults to True.
         handle_symlinks (bool, optional): Whether to preserve symlinks during the transformation. Defaults to True.
         sequential_delete (bool, optional): If True, deletes the source file after a successful copy. Use with caution. Defaults to False.
-
+                                            WARNING: Enabling this option will permanently delete the source files upon successful transformation.
+                                            Ensure you have proper backups before proceeding. Defaults to False.
     Returns:
         Dict[Path, Path]: A mapping of original file paths to their transformed paths.
     """
@@ -87,6 +88,8 @@ def vc_combine_folder(hierarchies,
         dryrun (bool, optional): If True, prints the planned actions without applying them. Defaults to True.
         handle_symlinks (bool, optional): Whether to preserve symlinks during the transformation. Defaults to True.
         sequential_delete (bool, optional): If True, deletes the source after a successful transformation. Defaults to False.
+                                            WARNING: Enabling this option will permanently delete the source folders upon successful transformation.
+                                            Ensure you have proper backups before proceeding. Defaults to False.
 
     Returns:
         Dict[Path, Path]: A mapping of original folder paths to their new combined folder paths.
@@ -126,6 +129,8 @@ def vc_split_folder(combined_folders,
         dryrun (bool, optional): If True, prints the planned actions without applying them. Defaults to True.
         handle_symlinks (bool, optional): Whether to preserve symlinks during the transformation. Defaults to True.
         sequential_delete (bool, optional): If True, deletes the source after a successful transformation. Defaults to False.
+                                            WARNING: Enabling this option will permanently delete the source folders upon successful transformation.
+                                            Ensure you have proper backups before proceeding. Defaults to False.
 
     Returns:
         Dict[Path, Path]: A mapping of original combined folder paths to their new hierarchical folder paths.
@@ -169,6 +174,8 @@ def vc_folder2files(file_paths,
         dryrun (bool, optional): If True, prints the planned actions without applying them. Defaults to True.
         handle_symlinks (bool, optional): Whether to preserve symlinks during the transformation. Defaults to True.
         sequential_delete (bool, optional): If True, deletes the source file after a successful transformation. Defaults to False.
+                                            WARNING: Enabling this option will permanently delete the source folders upon successful transformation.
+                                            Ensure you have proper backups before proceeding. Defaults to False.
 
     Returns:
         Dict[Path, Path]: A mapping of original file paths to their transformed file paths.
