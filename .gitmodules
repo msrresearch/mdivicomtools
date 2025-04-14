@@ -1,0 +1,3 @@
+[submodule "tools/mdipplcloud"]
+	path = tools/mdipplcloud
+	url = https://github.com/msrresearch/mdipplcloud.git
