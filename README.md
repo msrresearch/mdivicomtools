@@ -37,6 +37,11 @@ source venv/bin/activate  # on Windows: venv\Scripts\activate
 Then install the main utilities and submodules:
 
 ```bash
+# install optional submodules
+pip install ./tools/mdipplcloud
+pip install ./tools/mdimediaprep
+pip install ./tools/mdifacetools
+# install main utilities
 pip install .
 ```
 
@@ -45,10 +50,12 @@ pip install .
 To contribute or develop locally, install modules in editable mode:
 
 ```bash
-pip install -e ./utils
+# install optional submodules in editable mode
 pip install -e ./tools/mdipplcloud
 pip install -e ./tools/mdimediaprep
 pip install -e ./tools/mdifacetools
+# install main utilities in editable mode
+pip install -e .
 ```
 
 ---
