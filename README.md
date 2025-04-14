@@ -2,9 +2,9 @@
 
 **mdivicomtools** is a Python-based package designed for building and running analysis pipelines, specifically tailored for research in multimodal visual communication. It is developed as part of the [mdinteract](https://vicom.info/projects/multimodal-assessment-of-dyadic-interaction-in-disorders-of-social-interaction) project within the DFG Priority Program Visual Communication ([ViCom](https://vicom.info)).
 
-This repository provides core utilities along with modular components integrated via Git submodules, streamlining data processing and analysis workflows.
+This repository provides core utilities and modular components (integrated via Git submodules). The package is designed to be extensible, allowing users to add their own modules or integrate existing ones.
 
-**Note:** The repository is under active development. Core functionalities are available, with additional features being progressively integrated.
+**Note:** The repository is under active development. In this early alpha version core functionalities and selected submodules are available, with additional features being progressively integrated.
 
 ---
 
@@ -15,7 +15,7 @@ This repository provides core utilities along with modular components integrated
 1. **Clone the repository (with submodules):**
 
 ```bash
-git clone --recurse-submodules https://github.com/yourname/mdivicomtools.git
+git clone --recurse-submodules https://github.com/msrresearch/mdivicomtools.git
 ```
 
 If you initially cloned without submodules:
@@ -30,8 +30,13 @@ git submodule update --init --recursive
 Use a Python virtual environment (recommended)
 
 ```bash
+# python venv
 python -m venv venv
 source venv/bin/activate  # on Windows: venv\Scripts\activate
+# conda
+conda create -n mdivicomtools python=3.10
+conda activate mdivicomtools  
+
 ```
 
 Then install the main utilities and submodules:
@@ -39,8 +44,6 @@ Then install the main utilities and submodules:
 ```bash
 # install optional submodules
 pip install ./tools/mdipplcloud
-pip install ./tools/mdimediaprep
-pip install ./tools/mdifacetools
 # install main utilities
 pip install .
 ```
@@ -52,17 +55,9 @@ To contribute or develop locally, install modules in editable mode:
 ```bash
 # install optional submodules in editable mode
 pip install -e ./tools/mdipplcloud
-pip install -e ./tools/mdimediaprep
-pip install -e ./tools/mdifacetools
 # install main utilities in editable mode
 pip install -e .
 ```
-
----
-
-Below is a short snippet you could include in your **README** under a “Logging Setup” section:
-
----
 
 ### Logging Setup
 
@@ -131,16 +126,6 @@ git push origin main
 
 ---
 
-## Example Usage
-
-Here's a minimal example showing how to combine functionalities across modules:
-
-```python
-
-```
-
----
-
 ## Contributing
 
 Contributions are welcome! Follow these steps:
@@ -154,10 +139,10 @@ Contributions are welcome! Follow these steps:
 
 ## Roadmap
 
-- Expand module features
+- Expand core module features
+- Add more submodules
 - Automated integration testing
 - Publish to PyPI
-- Setup Continuous Integration/Continuous Deployment (CI/CD) via GitHub Actions
 
 ---
 
