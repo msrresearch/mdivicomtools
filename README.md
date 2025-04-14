@@ -146,6 +146,12 @@ Contributions are welcome! Follow these steps:
 
 ---
 
+## Citation
+If you use this code in your research, please cite
+- www.github.com/msrresearch/mdivicomtools
+
+---
+
 ## License
 
 This repository is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
