@@ -1,3 +1,5 @@
+# mdivicomtools/utils/rename.py
+
 import os
 import re
 import shutil
@@ -5,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Set
 import pandas as pd
 import logging
-from mdivicomtools.utils.logging import setup_logging
+from mdivicomtools.utils.logging_utils import setup_logging
 from typing import List, Optional
 
 def sanitize_filename(name):

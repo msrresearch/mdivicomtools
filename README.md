@@ -60,6 +60,41 @@ pip install -e .
 
 ---
 
+Below is a short snippet you could include in your **README** under a “Logging Setup” section:
+
+---
+
+### Logging Setup
+
+**mdivicomtools** provides convenient logging setups. For quick usage, just call `setup_logging()`:
+
+```python
+from mdivicomtools.utils import setup_logging
+setup_logging(preset="console_debug")
+```
+
+#### Available Presets
+- **`console_debug`**  
+  All messages at DEBUG level and above go to the console.
+- **`console_info_file_debug`**  
+  INFO-level messages go to the console, and DEBUG-level messages are saved to `mdivicomtools_debug.log`.
+- **`json_console_debug`**  
+  DEBUG-level messages to console, formatted as JSON (requires `python-json-logger`).
+
+#### Advanced Usage
+For custom logging setups, pass your own dictionary config:
+```python
+my_config = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": { ... },
+    "root": { ... }
+    # etc.
+}
+setup_logging(dict_config_override=my_config)
+```
+Or configure Python’s `logging` manually without calling `setup_logging()`.
+
 ## Working with Submodules
 
 ### Adding a New Submodule
