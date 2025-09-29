@@ -160,6 +160,16 @@ This repository is licensed under the MIT License. See the [LICENSE](LICENSE) fi
 
 ---
 
-## Support
+## Acknowledgements
+This project was supported by the following grants to Martin Schulte-Rüther
+DFG SCHU-2493/5-1 (Deutsche Forschungsgemeinschaft), LSC-AF2023_04 and LSC-AF2021_05 (Leibniz ScienceCampus).
+
+## Contact
+Martin Schulte-Rüther
+
+Department of Child and Adolescent Psychiatry and Psychotherapy, University Hospital Heidelberg, Ruprechts-Karls-University Heidelberg, [martin.schulte-ruether@uni-heidelberg.de](mailto:martin.schulte-ruether@uni-heidelberg.de)
+
+Department of Child and Adolescent Psychiatry and Psychotherapy, University Medical Center Göttingen, martin.schulte-ruether@med.uni-goettingen.de
+
 
 For questions or issues, please open an issue or contact the maintainers directly.
