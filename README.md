@@ -14,21 +14,23 @@ This repository provides the **public core**: a lightweight CLI + contracts that
 
 The default end-user story does **not** require git submodules. Install the core, then install plugins as needed.
 
-```bash
-# Install the core from GitHub (until we publish to PyPI)
-pip install git+https://github.com/msrresearch/mdivicomtools.git
-```
-
 Use a Python virtual environment (recommended):
 
 ```bash
 # python venv
-python -m venv venv
-source venv/bin/activate  # on Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # on Windows: .venv\Scripts\activate
 # conda
 conda create -n mdivicomtools python=3.10
 conda activate mdivicomtools  
 
+```
+
+Then install the core from GitHub (until we publish to PyPI):
+
+```bash
+pip install -U pip
+pip install git+https://github.com/msrresearch/mdivicomtools.git
 ```
 
 ### Install plugins (optional)
@@ -39,6 +41,30 @@ Example: optional Pupil Labs Cloud helper (installed as a separate package, not 
 
 ```bash
 pip install git+https://github.com/msrresearch/mdipplcloud.git
+```
+
+### Install core + a plugin bundle (recommended for onboarding)
+
+If you have a given list of plugins, the easiest onboarding is: install core + plugins in one go.
+
+One command:
+
+```bash
+pip install \
+  git+https://github.com/msrresearch/mdivicomtools.git \
+  git+https://github.com/msrresearch/mdipplcloud.git
+```
+
+Repeatable installs via a requirements file (pin to commits/tags for reproducibility):
+
+```text
+# requirements-bundle.txt
+git+https://github.com/msrresearch/mdivicomtools.git@main
+git+https://github.com/msrresearch/mdipplcloud.git@main
+```
+
+```bash
+pip install -r requirements-bundle.txt
 ```
 
 Then:
