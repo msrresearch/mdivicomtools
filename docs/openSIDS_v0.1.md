@@ -33,6 +33,39 @@ Canonical session time:
 Each stream SHOULD declare its native timebase in a sidecar:
 - `raw/<stream_type>/<stream_id>/<stream_id>_stream.yaml`
 
+## Result bundles (interop seam; minimal contract)
+
+Result bundles are versioned, typed outputs that can be handed off safely across plugins/modules (avoid the overloaded term "artifact").
+
+Sidecar:
+- A materialized result bundle SHOULD include `resultbundle.json`.
+- Preferred placement: at the payload root (adjacent to the files it describes).
+- Allowed placement (read-only/vendor inputs): a detached sidecar stored under an output registry (e.g., `<out_dir>/resultbundles/.../resultbundle.json`) that points back to the payload root via `source.root`.
+
+Minimal validation (v0.1):
+- Do not require full per-type schemas yet.
+- Validate only: envelope present, required files exist, required join/time keys exist.
+- Unknown extra fields/columns MUST be allowed.
+
+`resultbundle.json` required fields (v0.1):
+- `resultbundle_type` (stable namespaced id; example: `pupilcloud.raw_export.v4`)
+- `schema_version` (SemVer-like)
+- `time_reference` (at least `kind`, `unit`)
+- `files[]` (at least `path`, `role`, `format`, `required`)
+
+Recommended fields (v0.1):
+- `created_at` (UTC)
+- `producer` (sidecar generator provenance; recommended keys: `tool_ref`, `tool_version`; optional `git_sha`, `pipeline_run_id`)
+- `upstream_tool` (optional informational provenance of the payload generator; vendor/exporter/tool name + version)
+- `source` (required when sidecar is detached): `root`, `root_base`
+
+Key portability rule:
+- Tools SHOULD NOT rewrite/rename vendor columns in-place. Instead, sidecars MAY include `files[].key_columns` mapping normalized join/time keys to the actual column names.
+
+Point vs interval time (important for event tables):
+- `files[].time.kind = point` with `key=timestamp_ns` for sample-like tables.
+- `files[].time.kind = interval` with `start_key`/`end_key` for event windows (e.g. fixations, blinks).
+
 ## Sync artifacts (v0.1 proposal)
 
 Per aligned stream (required when aligned):
@@ -49,4 +82,3 @@ Use a simple events table pivot for roundtripping annotations across tools:
 ## Status
 
 This is a draft direction. Schemas and exact filenames may evolve.
-
