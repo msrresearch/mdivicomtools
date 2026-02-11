@@ -2,9 +2,9 @@
 
 **mdivicomtools** is a Python-based package designed for building and running analysis pipelines, specifically tailored for research in multimodal visual communication. It is developed as part of the [mdinteract](https://vicom.info/projects/multimodal-assessment-of-dyadic-interaction-in-disorders-of-social-interaction) project within the DFG Priority Program Visual Communication ([ViCom](https://vicom.info)).
 
-This repository provides core utilities and modular components (integrated via Git submodules). The package is designed to be extensible, allowing users to add their own modules or integrate existing ones.
+This repository provides the **public core**: a lightweight CLI + contracts that can discover and run **plugins** (separate Python packages or container tools). The goal is extensibility without forcing a shared dependency stack.
 
-**Note:** The repository is under active development. In this early alpha version core functionalities and selected submodules are available, with additional features being progressively integrated.
+**Note:** The repository is under active development. In this early alpha version core functionality is available, with additional plugins and features being progressively integrated.
 
 ---
 
@@ -12,51 +12,82 @@ This repository provides core utilities and modular components (integrated via G
 
 ### Installation for Users
 
-1. **Clone the repository (with submodules):**
+The default end-user story does **not** require git submodules. Install the core, then install plugins as needed.
 
-```bash
-git clone --recurse-submodules https://github.com/msrresearch/mdivicomtools.git
-```
-
-If you initially cloned without submodules:
-
-```bash
-cd mdivicomtools
-git submodule update --init --recursive
-```
-
-2. **Install dependencies:**
-
-Use a Python virtual environment (recommended)
+Use a Python virtual environment (recommended):
 
 ```bash
 # python venv
-python -m venv venv
-source venv/bin/activate  # on Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # on Windows: .venv\Scripts\activate
 # conda
 conda create -n mdivicomtools python=3.10
 conda activate mdivicomtools  
 
 ```
 
-Then install the main utilities and submodules:
+Then install the core from GitHub (until we publish to PyPI):
 
 ```bash
-# install optional submodules
-pip install ./tools/mdipplcloud
-# install main utilities
-pip install .
+pip install -U pip
+pip install git+https://github.com/msrresearch/mdivicomtools.git
+```
+
+### Install plugins (optional)
+
+Plugins are separate packages that register themselves via Python entry points (`mdivicomtools.plugins`). Install only what you need.
+
+Example: optional Pupil Labs Cloud helper (installed as a separate package, not via submodule):
+
+```bash
+pip install git+https://github.com/msrresearch/mdipplcloud.git
+```
+
+### Install core + a plugin bundle (recommended for onboarding)
+
+If you have a given list of plugins, the easiest onboarding is: install core + plugins in one go.
+
+One command:
+
+```bash
+pip install \
+  git+https://github.com/msrresearch/mdivicomtools.git \
+  git+https://github.com/msrresearch/mdipplcloud.git
+```
+
+Repeatable installs via a requirements file (pin to commits/tags for reproducibility):
+
+```text
+# requirements-bundle.txt
+git+https://github.com/msrresearch/mdivicomtools.git@main
+git+https://github.com/msrresearch/mdipplcloud.git@main
+```
+
+```bash
+pip install -r requirements-bundle.txt
+```
+
+Then:
+
+```bash
+mdivicom plugins list
+mdivicom plugins info <plugin_id>
 ```
 
 ### Setup for Developers
 
-To contribute or develop locally, install modules in editable mode:
+To contribute or develop locally:
 
 ```bash
-# install optional submodules in editable mode
-pip install -e ./tools/mdipplcloud
-# install main utilities in editable mode
+git clone https://github.com/msrresearch/mdivicomtools.git
+cd mdivicomtools
 pip install -e .
+```
+
+Optional (developer convenience only): initialize submodules if you want to hack on anything under `tools/` locally.
+
+```bash
+git submodule update --init --recursive
 ```
 
 ### Logging Setup
@@ -90,40 +121,6 @@ setup_logging(dict_config_override=my_config)
 ```
 Or configure Python’s `logging` manually without calling `setup_logging()`.
 
-## Working with Submodules
-
-### Adding a New Submodule
-
-To add a new submodule as a standalone Python package:
-
-```bash
-git submodule add <repository-url> tools/<new-module-name>
-git commit -m "chore: add new submodule <new-module-name>"
-git push origin main
-```
-
-### Updating Submodules
-
-To update all submodules to their latest commits:
-
-```bash
-git submodule update --remote --recursive
-git commit -am "chore: update all submodules"
-git push origin main
-```
-
-To update a specific submodule branch:
-
-```bash
-cd tools/<submodule-name>
-git checkout <branch-name>
-git pull
-cd ../..
-git add tools/<submodule-name>
-git commit -m "chore: update submodule <submodule-name> to latest <branch-name>"
-git push origin main
-```
-
 ---
 
 ## Contributing
@@ -140,7 +137,7 @@ Contributions are welcome! Follow these steps:
 ## Roadmap
 
 - Expand core module features
-- Add more submodules
+- Add more plugins (python + container)
 - Automated integration testing
 - Publish to PyPI
 

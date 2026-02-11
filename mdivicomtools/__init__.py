@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 
-from utils.rename import (
+from .utils.rename import (
     get_file_list,
     plan_transformations,
     check_for_conflicts,
