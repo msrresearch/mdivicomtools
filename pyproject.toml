@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdivicomtools"
-version = "0.2"
+version = "0.2.0"
 description = "Collection of tools for working multimodal data in interaction and communication research"
 readme = "README.md"
 license = "MIT"
