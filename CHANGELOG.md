@@ -15,4 +15,5 @@ The format is based on Keep a Changelog.
 - Added Makefile release targets: `release-check`, `release-bump-*`, and `release-tag`.
 
 ### Fixed
+- Normalized plugin discovery/runtime to support v0.1 `meta`/`entry.callable` plugin contracts (including mdipplcloud-style registration).
 - Established a consistent release-policy baseline for this repository.

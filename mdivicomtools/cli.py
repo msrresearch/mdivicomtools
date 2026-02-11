@@ -67,7 +67,7 @@ def _cmd_plugins_info(args: argparse.Namespace) -> int:
 
 def _cmd_run(args: argparse.Namespace) -> int:
     plugin_ref = PluginRef.parse(args.plugin_ref)
-    plugin = get_plugin(plugin_ref)
+    plugin = get_plugin(plugin_ref, resolve_execution=True)
 
     dataset_dir = Path(args.dataset).expanduser().resolve()
     out_dir = Path(args.out).expanduser().resolve()
