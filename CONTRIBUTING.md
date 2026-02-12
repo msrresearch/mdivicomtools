@@ -25,7 +25,8 @@ Policy:
 
 ## Review / PR policy
 
-- Non-trivial changes should get at least **one review** before merging.
+- Multi-maintainer mode: non-trivial changes should get at least **one review from a different person** before merging.
+- Single-maintainer mode: PRs may be merged by the author after required checks pass and the PR description documents scope/risks.
 - If a change affects the **public contract** (CLI surface, plugin contract, dataset conventions), it must:
   - update docs, and
   - clearly state migration/compat impact in the PR description.
