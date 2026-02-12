@@ -6,14 +6,7 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
-### Changed
-- Clarified plugin-first public usage in `README.md` and removed submodule-oriented setup guidance.
-- Moved the MDI versioning/release policy to public docs (`README.md`), replacing the prior `AGENTS.md` publication path.
-- Updated release checks to validate policy presence in `README.md` or `docs/RELEASE.md`.
-
-### Removed
-- Removed `tools/mdipplcloud` submodule pointer from the public core repository.
-- Removed tracked `AGENTS.md` policy artifact from the public repository root.
+- No entries yet.
 
 ## [0.2.0] - 2026-02-11
 
@@ -26,6 +19,11 @@ The format is based on Keep a Changelog.
 ### Changed
 - `pyproject.toml` package version normalized to SemVer format (`0.2.0`).
 - Added Makefile release targets: `release-check`, `release-bump-*`, and `release-tag`.
+- Clarified plugin-first public usage in `README.md` and removed submodule-oriented setup guidance.
+- Consolidated MDI versioning/release policy into public docs and updated release checks to validate policy presence in `README.md` or `docs/RELEASE.md`.
+
+### Removed
+- Removed `tools/mdipplcloud` submodule pointer from the public core repository.
 
 ### Fixed
 - Normalized plugin discovery/runtime to support v0.1 `meta`/`entry.callable` plugin contracts (including mdipplcloud-style registration).
