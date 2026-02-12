@@ -1,8 +1,8 @@
-# Contributing & Maintenance Policy (minimal)
+# Contributing & Maintenance Policy
 
 This repository is **public**. Please keep all changes safe to publish.
 
-## Public safety (non‑negotiable)
+## Public safety
 
 - Never commit **sensitive** material (PHI, identifiable clinical media, private datasets, credentials, internal hostnames/paths, private repo URLs, etc.).
 - Keep examples and fixtures **synthetic or de‑identified**.
@@ -20,7 +20,7 @@ We use a simple trunk-based workflow:
   - `chore/<topic>` maintenance/refactors
 
 Policy:
-- Avoid direct commits to `main` (prefer PRs).
+- no direct commits to `main` (prefer PRs).
 - Keep PRs small and focused (one intent per PR).
 
 ## Review / PR policy
@@ -40,5 +40,4 @@ Policy:
 
 - Prefer “docs + minimal scaffolding” first, then implementations in small steps.
 - Heavy or conflicting dependencies should be isolated behind plugins (docker/tool lane when needed) rather than added to the core environment.
-- Git submodules may exist for developer convenience, but the default end‑user story should not require them.
-
+- Keep the public core plugin-first: end users install core + plugins as separate packages.

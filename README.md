@@ -4,6 +4,8 @@
 
 This repository provides the **public core**: a lightweight CLI + contracts that can discover and run **plugins** (separate Python packages or container tools). The goal is extensibility without forcing a shared dependency stack.
 
+For stronger cross-tool interoperability, plugin/tool authors should follow the openSIDS v0.1 resultbundle interoperability profile: emit a `resultbundle.json` sidecar with at least `resultbundle_type`, `schema_version`, `time_reference`, and `files[]` (optionally including key/time-column mappings). Sidecars are authoritative when present; limited inference is a fallback for legacy inputs without sidecars. See `docs/openSIDS_v0.1.md`.
+
 **Note:** The repository is under active development. In this early alpha version core functionality is available, with additional plugins and features being progressively integrated.
 
 ---
@@ -84,10 +86,10 @@ cd mdivicomtools
 pip install -e .
 ```
 
-Optional (developer convenience only): initialize submodules if you want to hack on anything under `tools/` locally.
+Install plugins as separate packages in the same environment when testing integration behavior:
 
 ```bash
-git submodule update --init --recursive
+pip install -e /path/to/plugin_repo
 ```
 
 ### Logging Setup
@@ -131,6 +133,33 @@ Contributions are welcome! Follow these steps:
 2. Create a feature branch (`git checkout -b feat/<new-feature>`).
 3. Develop and test changes.
 4. Push changes and open a Pull Request.
+
+---
+
+## MDI Versioning and Release Policy (v1)
+
+- Use Semantic Versioning (`MAJOR.MINOR.PATCH`) for package/tool releases.
+- Keep data/schema compatibility versioning separate (for example `schema_version` in contracts/sidecars).
+- Version source of truth:
+  - Python package repos: `pyproject.toml` (`[project].version`)
+  - Non-package repos: root `VERSION` file
+- Branch flow for releases:
+  - `local/dev` for integration
+  - `local/release-staging` for release candidates
+  - `main` for publication
+- Cherry-pick only non-`plan:` commits into release candidates.
+- Maintain `CHANGELOG.md` with `## [Unreleased]` at top.
+- Create annotated tags as `vX.Y.Z` from `main` only.
+- Use release tooling:
+  - `scripts/release/bump_version.sh [patch|minor|major]`
+  - `scripts/release/release_check.sh`
+  - `scripts/release/tag_release.sh`
+- Keep tag pushing explicit (no auto-push in scripts).
+
+### Commit Message Convention (recommended)
+
+- Prefix with one of: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build`, `ci`.
+- Keep release commits focused (`chore: release vX.Y.Z`).
 
 ---
 
