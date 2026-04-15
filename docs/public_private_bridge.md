@@ -1,4 +1,8 @@
-# Public↔private bridge v0.1 (draft)
+# Public↔private bridge (draft)
+
+Status:
+- draft
+- public note version: `v0.1`
 
 ## Principle
 
@@ -15,4 +19,3 @@ The public repo must never reference private repos/resources:
 ## Submodules
 
 Submodules can be convenient for internal development, but they should not be the default end-user installation story.
-

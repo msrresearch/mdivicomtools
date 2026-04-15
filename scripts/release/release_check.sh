@@ -36,12 +36,14 @@ else
   fail "No version source (pyproject.toml [project].version or VERSION)"
 fi
 
-if [[ -f README.md ]] && grep -q '^## MDI Versioning and Release Policy' README.md; then
+if [[ -f AGENTS.md ]] && grep -q 'BEGIN MDI VERSION POLICY' AGENTS.md; then
+  pass "AGENTS.md includes MDI version policy block"
+elif [[ -f README.md ]] && grep -Eq '^## (MDI Versioning and Release Policy|Versioning and releases)$' README.md; then
   pass "README.md includes MDI version policy section"
-elif [[ -f docs/RELEASE.md ]] && grep -q '^# Release Workflow (MDI policy)' docs/RELEASE.md; then
+elif [[ -f docs/RELEASE.md ]] && grep -Eq '^# (Release Workflow \(MDI policy\)|Versioning and releases)$' docs/RELEASE.md; then
   pass "docs/RELEASE.md includes MDI release policy"
 else
-  fail "No MDI release policy found (expected README.md section or docs/RELEASE.md)"
+  fail "No MDI release policy found (expected AGENTS.md block, README section, or docs/RELEASE.md)"
 fi
 
 echo "Release checks passed."

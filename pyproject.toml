@@ -4,23 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdivicomtools"
-version = "0.2.0"
+version = "0.3.0"
 description = "Collection of tools for working multimodal data in interaction and communication research"
 readme = "README.md"
-license = "MIT"
+license = { file = "LICENSE" }
 authors = [
-  {name = "Martin Schulte-Rüther", email = "martin@schulte-ruether.de"},
+  {name = "Martin Schulte-Rüther", email = "martin.schulte-ruether@uni-heidelberg.de"},
 ]
 requires-python = ">=3.7"
 
 dependencies = [
   "requests",
   "pandas",
-  "importlib-metadata; python_version < '3.8'"
+  "importlib-metadata; python_version < '3.8'",
+  "tomli; python_version < '3.11'"
 ]
 
 [tool.setuptools]
 license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+include = ["mdivicomtools*"]
 
 [project.scripts]
 mdivicom = "mdivicomtools.cli:main"
