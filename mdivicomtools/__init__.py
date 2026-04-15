@@ -3,17 +3,58 @@
 
 from typing import List, Optional
 
-from .utils.rename import (
-    get_file_list,
-    plan_transformations,
-    check_for_conflicts,
-    apply_transformations,
-    plan_combine_folder_hierarchies,
-    plan_split_folder_hierarchies,
-    plan_prepend_foldernames_to_filename,
-    copy_item,
-    sanitize_filename
-)
+def get_file_list(*args, **kwargs):
+    from .utils.rename import get_file_list as _get_file_list
+
+    return _get_file_list(*args, **kwargs)
+
+
+def plan_transformations(*args, **kwargs):
+    from .utils.rename import plan_transformations as _plan_transformations
+
+    return _plan_transformations(*args, **kwargs)
+
+
+def check_for_conflicts(*args, **kwargs):
+    from .utils.rename import check_for_conflicts as _check_for_conflicts
+
+    return _check_for_conflicts(*args, **kwargs)
+
+
+def apply_transformations(*args, **kwargs):
+    from .utils.rename import apply_transformations as _apply_transformations
+
+    return _apply_transformations(*args, **kwargs)
+
+
+def plan_combine_folder_hierarchies(*args, **kwargs):
+    from .utils.rename import plan_combine_folder_hierarchies as _plan_combine_folder_hierarchies
+
+    return _plan_combine_folder_hierarchies(*args, **kwargs)
+
+
+def plan_split_folder_hierarchies(*args, **kwargs):
+    from .utils.rename import plan_split_folder_hierarchies as _plan_split_folder_hierarchies
+
+    return _plan_split_folder_hierarchies(*args, **kwargs)
+
+
+def plan_prepend_foldernames_to_filename(*args, **kwargs):
+    from .utils.rename import plan_prepend_foldernames_to_filename as _plan_prepend_foldernames_to_filename
+
+    return _plan_prepend_foldernames_to_filename(*args, **kwargs)
+
+
+def copy_item(*args, **kwargs):
+    from .utils.rename import copy_item as _copy_item
+
+    return _copy_item(*args, **kwargs)
+
+
+def sanitize_filename(*args, **kwargs):
+    from .utils.rename import sanitize_filename as _sanitize_filename
+
+    return _sanitize_filename(*args, **kwargs)
 
 # split folders and folders2files still needs to be tested!
 

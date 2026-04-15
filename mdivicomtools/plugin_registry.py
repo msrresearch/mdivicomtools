@@ -2,7 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Dict, List, Optional
+import os
+from pathlib import Path
+import sys
+from typing import Any, Dict, Iterable, List, Optional
+
+try:
+    import tomllib  # py>=3.11
+except ModuleNotFoundError:  # pragma: no cover
+    try:
+        import tomli as tomllib  # type: ignore
+    except ModuleNotFoundError:  # pragma: no cover
+        tomllib = None  # type: ignore
 
 try:
     from importlib.metadata import entry_points
@@ -44,6 +55,18 @@ def _entry_point_locator(ep: Any) -> str:
     if attr:
         return f"{module_name}:{attr}"
     return module_name
+
+
+@dataclass(frozen=True)
+class _DevEntryPoint:
+    """Lightweight stand-in for importlib.metadata entry points (dev-only)."""
+
+    name: str
+    value: str
+    origin: Optional[str] = None
+
+    def load(self) -> Any:
+        return _resolve_callable(self.value)
 
 
 def _normalize_plugin_contract(payload: Any, ep: Any) -> Dict[str, Any]:
@@ -114,9 +137,99 @@ def _ensure_python_run_callable(plugin: Dict[str, Any]) -> Dict[str, Any]:
     return plugin_copy
 
 
+def _split_paths(raw: Optional[str]) -> List[Path]:
+    if not raw:
+        return []
+    parts = [item.strip() for item in raw.split(os.pathsep) if item.strip()]
+    return [Path(part).expanduser().resolve(strict=False) for part in parts]
+
+
+def _iter_pyproject_paths(root: Path) -> Iterable[Path]:
+    if root.is_file() and root.name == "pyproject.toml":
+        yield root
+        return
+
+    candidate = root / "pyproject.toml"
+    if candidate.is_file():
+        yield candidate
+        return
+
+    if not root.is_dir():
+        return
+
+    for child in sorted(root.iterdir(), key=lambda item: item.name):
+        if not child.is_dir():
+            continue
+        pyproject = child / "pyproject.toml"
+        if pyproject.is_file():
+            yield pyproject
+
+
+def _add_sys_path(path: Path) -> None:
+    path_str = str(path)
+    if path_str in sys.path:
+        return
+    sys.path.insert(0, path_str)
+
+
+def _load_pyproject(pyproject_path: Path) -> Dict[str, Any]:
+    if tomllib is None:
+        return {}
+    try:
+        payload = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def _extract_entry_point_group(pyproject: Dict[str, Any], group: str) -> Dict[str, str]:
+    project = pyproject.get("project")
+    if not isinstance(project, dict):
+        return {}
+
+    entry_points = project.get("entry-points")
+    if entry_points is None:
+        entry_points = project.get("entry_points")
+    if not isinstance(entry_points, dict):
+        return {}
+
+    group_table = entry_points.get(group)
+    if not isinstance(group_table, dict):
+        return {}
+
+    resolved: Dict[str, str] = {}
+    for key, value in group_table.items():
+        if isinstance(key, str) and isinstance(value, str):
+            resolved[key] = value
+    return resolved
+
+
+def _get_dev_entry_points(group: str) -> List[Any]:
+    roots = _split_paths(os.getenv("MDIVICOM_DEV_PLUGIN_ROOTS"))
+    if not roots:
+        return []
+
+    entrypoints: List[Any] = []
+    for root in roots:
+        for pyproject_path in _iter_pyproject_paths(root):
+            repo_root = pyproject_path.parent
+            src_root = repo_root / "src"
+            if src_root.is_dir():
+                _add_sys_path(src_root)
+            _add_sys_path(repo_root)
+
+            pyproject = _load_pyproject(pyproject_path)
+            for name, value in _extract_entry_point_group(pyproject, group).items():
+                entrypoints.append(_DevEntryPoint(name=name, value=value, origin=str(pyproject_path)))
+    return entrypoints
+
+
 def list_plugins() -> List[Dict[str, Any]]:
     plugins: List[Dict[str, Any]] = []
-    for ep in _get_entry_points("mdivicomtools.plugins"):
+    entrypoint_group = "mdivicomtools.plugins"
+    for ep in _get_entry_points(entrypoint_group) + _get_dev_entry_points(entrypoint_group):
         try:
             get_plugin = ep.load()
             plugin = _normalize_plugin_contract(get_plugin(), ep)

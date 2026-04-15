@@ -1,14 +1,29 @@
 # mdivicomtools
 
-**mdivicomtools** is a Python-based package designed for building and running analysis pipelines, specifically tailored for research in multimodal visual communication. It is developed as part of the [mdinteract](https://vicom.info/projects/multimodal-assessment-of-dyadic-interaction-in-disorders-of-social-interaction) project within the DFG Priority Program Visual Communication ([ViCom](https://vicom.info)).
+**mdivicomtools** is the public core for modular multimodal dataset preparation and analysis workflows: a Python-based package with a lightweight CLI, shared contracts, and plugin discovery so separate tools can interoperate without forcing one shared dependency stack, developed as part of the [mdinteract](https://vicom.info/projects/multimodal-assessment-of-dyadic-interaction-in-disorders-of-social-interaction) project within the DFG Priority Program Visual Communication ([ViCom](https://vicom.info)) and specifically tailored for research in multimodal visual communication.
 
-This repository provides the **public core**: a lightweight CLI + contracts that can discover and run **plugins** (separate Python packages or container tools). The goal is extensibility without forcing a shared dependency stack.
+This repository provides the public core package, the current openSIDS draft, and resultbundle interoperability tooling. It is a stable public starting point for the ecosystem, while broader end-to-end workflows still depend on separate plugins and companion repositories.
 
-For stronger cross-tool interoperability, plugin/tool authors should follow the openSIDS v0.1 resultbundle interoperability profile: emit a `resultbundle.json` sidecar with at least `resultbundle_type`, `schema_version`, `time_reference`, and `files[]` (optionally including key/time-column mappings). Sidecars are authoritative when present; limited inference is a fallback for legacy inputs without sidecars. See `docs/openSIDS_v0.1.md`.
+## Start here
 
-**Note:** The repository is under active development. In this early alpha version core functionality is available, with additional plugins and features being progressively integrated.
+- `docs/openSIDS.md` - current public draft of the session, sync, annotation, and resultbundle model (`v0.2`)
+- `docs/plugin_contract.md` - plugin registration and run interface draft (`v0.1`)
+- `docs/resultbundle_runtime_integration.md` - producer/consumer seam for `resultbundle.json` (`v0.1`)
+- `docs/container_plugin_quickstart.md` - preview of container-lane command shape and current caveats
+- `bundles/README.md` - curated install bundles for common local setups
 
----
+## What works today
+
+- Python-lane plugin discovery and execution via `mdivicom`
+- Resultbundle inspection and validation helpers for cross-tool handoff checks
+- Curated install bundles for common local setups
+
+## What is still draft or scaffold
+
+- openSIDS is still a draft contract, not a frozen standard
+- `mdivicom run ... --backend docker` is scaffold-only and currently raises `NotImplementedError`
+- Broader end-to-end orchestration is still plugin- and script-oriented rather than a finished workflow engine
+- Domain-specific plugins live in separate repos and must be installed separately
 
 ## Quick Start Guide
 
@@ -28,53 +43,70 @@ conda activate mdivicomtools
 
 ```
 
-Then install the core from GitHub (until we publish to PyPI):
+For the public `v0.3.0` release, install the core from a pinned Git tag:
 
 ```bash
 pip install -U pip
-pip install git+https://github.com/msrresearch/mdivicomtools.git
+pip install git+https://github.com/msrresearch/mdivicomtools.git@v0.3.0
 ```
 
 ### Install plugins (optional)
 
 Plugins are separate packages that register themselves via Python entry points (`mdivicomtools.plugins`). Install only what you need.
 
-Example: optional Pupil Labs Cloud helper (installed as a separate package, not via submodule):
+Example optional plugin:
 
 ```bash
-pip install git+https://github.com/msrresearch/mdipplcloud.git
+pip install git+https://github.com/msrresearch/mdipplcloud.git@v0.2.0
 ```
 
-### Install core + a plugin bundle (recommended for onboarding)
+### Install core + a plugin bundle
 
-If you have a given list of plugins, the easiest onboarding is: install core + plugins in one go.
-
-One command:
+Use curated bundle presets from `bundles/`:
 
 ```bash
-pip install \
-  git+https://github.com/msrresearch/mdivicomtools.git \
-  git+https://github.com/msrresearch/mdipplcloud.git
+pip install -r bundles/requirements-core.txt
+pip install -r bundles/requirements-core-mdipplcloud.txt
 ```
 
-Repeatable installs via a requirements file (pin to commits/tags for reproducibility):
+For development against the moving main branch instead of a release tag, use explicit `@main` installs outside these presets.
 
-```text
-# requirements-bundle.txt
-git+https://github.com/msrresearch/mdivicomtools.git@main
-git+https://github.com/msrresearch/mdipplcloud.git@main
-```
-
-```bash
-pip install -r requirements-bundle.txt
-```
-
-Then:
+Then inspect what is available:
 
 ```bash
 mdivicom plugins list
 mdivicom plugins info <plugin_id>
 ```
+
+### Container plugin preview
+
+The expected container-lane command shape and current runtime caveats are documented in:
+
+- `docs/container_plugin_quickstart.md`
+
+Current caveat for this public core version:
+- `mdivicom run ... --backend docker` is scaffold-only and currently raises `NotImplementedError`.
+
+### Resultbundle inspection and validation
+
+For stronger producer-to-consumer interoperability, emit a `resultbundle.json` sidecar with at least `resultbundle_type`, `schema_version`, `time_reference`, and `files[]`.
+
+```bash
+mdivicom resultbundles inspect --sidecar /path/to/resultbundle.json --out-dir /path/to/run_out
+mdivicom resultbundles validate --sidecar /path/to/resultbundle.json \
+  --out-dir /path/to/run_out \
+  --mode strict \
+  --expect-type mdivicom.timeline.subject \
+  --supported-major 0
+mdivicom resultbundles policies
+```
+
+Validation modes:
+- `strict`: fail on invalid envelope, missing required files, or incompatible type/version
+- `warn`: continue with explicit warnings for softer compatibility issues
+- `off`: skip validation checks
+
+See `docs/resultbundle_runtime_integration.md` for the fuller contract and policy profiles.
 
 ### Setup for Developers
 
@@ -91,6 +123,14 @@ Install plugins as separate packages in the same environment when testing integr
 ```bash
 pip install -e /path/to/plugin_repo
 ```
+
+There is also a dev-only source-tree discovery path for local integration work:
+
+```bash
+MDIVICOM_DEV_PLUGIN_ROOTS=/path/to/plugin_roots .venv/bin/python -m mdivicomtools plugins list
+```
+
+That environment-variable path is opt-in only and does not change default public behavior.
 
 ### Logging Setup
 
@@ -136,30 +176,14 @@ Contributions are welcome! Follow these steps:
 
 ---
 
-## MDI Versioning and Release Policy (v1)
+## Versioning and releases
 
-- Use Semantic Versioning (`MAJOR.MINOR.PATCH`) for package/tool releases.
-- Keep data/schema compatibility versioning separate (for example `schema_version` in contracts/sidecars).
-- Version source of truth:
-  - Python package repos: `pyproject.toml` (`[project].version`)
-  - Non-package repos: root `VERSION` file
-- Branch flow for releases:
-  - `local/dev` for integration
-  - `local/release-staging` for release candidates
-  - `main` for publication
-- Cherry-pick only non-`plan:` commits into release candidates.
-- Maintain `CHANGELOG.md` with `## [Unreleased]` at top.
-- Create annotated tags as `vX.Y.Z` from `main` only.
-- Use release tooling:
-  - `scripts/release/bump_version.sh [patch|minor|major]`
-  - `scripts/release/release_check.sh`
-  - `scripts/release/tag_release.sh`
-- Keep tag pushing explicit (no auto-push in scripts).
-
-### Commit Message Convention (recommended)
-
-- Prefix with one of: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build`, `ci`.
-- Keep release commits focused (`chore: release vX.Y.Z`).
+- Package/tool releases use Semantic Versioning (`MAJOR.MINOR.PATCH`).
+- The package version source of truth is `pyproject.toml` (`[project].version`).
+- Schema/interface compatibility versions are tracked separately inside contracts, sidecars, and interface docs.
+- `CHANGELOG.md` keeps `## [Unreleased]` at the top and release sections for published versions.
+- Published releases are tagged as `vX.Y.Z` from `main`.
+- Public release commands are documented in `docs/RELEASE.md`.
 
 ---
 
