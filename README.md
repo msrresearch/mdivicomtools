@@ -12,6 +12,17 @@ This repository provides the public core package, the current openSIDS draft, an
 - `docs/container_plugin_quickstart.md` - preview of container-lane command shape and current caveats
 - `bundles/README.md` - curated install bundles for common local setups
 
+The intended modular handoff is:
+
+```text
+acquisition application -> openSIDS-compatible session view -> installed plugin(s) -> ResultBundle(s) -> analysis/annotation consumer
+```
+
+The acquisition application keeps device control and study-specific workflow.
+openSIDS provides the portable data/session boundary, the plugin contract
+provides the execution boundary, and ResultBundles provide typed outputs for
+independent consumers.
+
 ## What works today
 
 - Python-lane plugin discovery and execution via `mdivicom`
@@ -57,7 +68,7 @@ Plugins are separate packages that register themselves via Python entry points (
 Example optional plugin:
 
 ```bash
-pip install git+https://github.com/msrresearch/mdipplcloud.git@v0.2.0
+pip install git+https://github.com/msrresearch/mdipplcloud.git@v0.2.1
 ```
 
 ### Install core + a plugin bundle
