@@ -12,16 +12,16 @@ This repository provides the public core package, the current openSIDS draft, an
 - `docs/container_plugin_quickstart.md` - preview of container-lane command shape and current caveats
 - `bundles/README.md` - curated install bundles for common local setups
 
-The intended modular handoff is:
+The intended modular interoperability pattern is:
 
 ```text
-acquisition application -> openSIDS-compatible session view -> installed plugin(s) -> ResultBundle(s) -> analysis/annotation consumer
+data-producing application or tool -> openSIDS-compatible dataset/session view -> installed plugin(s) -> ResultBundle(s) -> independent consumer
 ```
 
-The acquisition application keeps device control and study-specific workflow.
-openSIDS provides the portable data/session boundary, the plugin contract
-provides the execution boundary, and ResultBundles provide typed outputs for
-independent consumers.
+Originating applications and tools keep their source-specific acquisition,
+import, processing, or study-workflow responsibilities. openSIDS provides the
+portable data/session boundary, the plugin contract provides the execution
+boundary, and ResultBundles provide typed outputs for independent consumers.
 
 ## What works today
 
