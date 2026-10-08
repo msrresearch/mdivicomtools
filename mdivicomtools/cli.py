@@ -91,15 +91,32 @@ def _cmd_plugins_info(args: argparse.Namespace) -> int:
     return 0
 
 
+def _paths_overlap(first: Path, second: Path) -> bool:
+    if first == second or first in second.parents or second in first.parents:
+        return True
+
+    def identity(path: Path) -> Any:
+        try:
+            info = path.stat()
+        except OSError:
+            return None
+        return info.st_dev, info.st_ino
+
+    # Case, normalization and mount aliases need filesystem identity, not path text.
+    for path, other in ((first, second), (second, first)):
+        current = identity(path)
+        if current is not None and any(current == identity(parent) for parent in (other,) + tuple(other.parents)):
+            return True
+    return False
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     plugin_ref = PluginRef.parse(args.plugin_ref)
     dataset_dir = Path(args.dataset).expanduser().resolve()
     out_dir = Path(args.out).expanduser().resolve()
     work_dir = Path(args.work).expanduser().resolve() if args.work else None
     for option, writable in (("--out", out_dir), ("--work", work_dir)):
-        if writable is not None and (
-            writable == dataset_dir or writable in dataset_dir.parents or dataset_dir in writable.parents
-        ):
+        if writable is not None and _paths_overlap(dataset_dir, writable):
             raise SystemExit(f"{option} must be disjoint from --dataset (not equal, inside, or a parent).")
     plugin = get_plugin(plugin_ref, resolve_execution=True)
     config = _parse_config(args.config)

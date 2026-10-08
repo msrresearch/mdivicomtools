@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -118,3 +119,45 @@ def test_isolated_run_retains_arguments_and_run_record_behavior(tmp_path, monkey
     assert record["out_dir"] == str(out.resolve()) and record["work_dir"] == str(work.resolve())
     assert record["plugin"]["id"] == "demo" and record["backend"] == "auto"
     assert (out / "payload.txt").exists() is (not dry_run)
+
+
+@pytest.mark.parametrize("alias_kind", ["case", "unicode", "firmlink"])
+@pytest.mark.parametrize("option", ["out", "work"])
+@pytest.mark.parametrize("relation", ["equal", "parent", "child"])
+def test_filesystem_alias_cannot_bypass_overlap_rejection(tmp_path, monkeypatch, alias_kind, option, relation):
+    parent, alias = _aliased_parent(tmp_path, alias_kind)
+    dataset = _dataset(parent)
+    target = {"equal": alias / "input", "parent": alias, "child": alias / "input" / "new"}[relation]
+    out = target if option == "out" else tmp_path / "separate-output"
+    work = target if option == "work" else None
+    _assert_rejected(monkeypatch, tmp_path, dataset, out, work, True)
+
+
+def _aliased_parent(root, kind):
+    parent = root / ("café" if kind == "unicode" else "Parent")
+    parent.mkdir()
+    if kind == "case":
+        alias = parent.with_name("PARENT")
+    elif kind == "unicode":
+        alias = parent.with_name("cafe\u0301")
+    else:
+        alias = Path("/System/Volumes/Data") / parent.relative_to(parent.anchor)
+    if not alias.exists() or not alias.samefile(parent):
+        pytest.skip(f"{kind} filesystem alias unavailable on this volume")
+    return parent, alias
+
+
+@pytest.mark.parametrize("alias_kind", ["case", "unicode", "firmlink"])
+def test_isolated_siblings_under_an_aliased_parent_are_allowed(tmp_path, monkeypatch, alias_kind):
+    parent, alias = _aliased_parent(tmp_path, alias_kind)
+    dataset = _dataset(parent)
+    calls = []
+    monkeypatch.setattr(cli, "get_plugin", lambda *a, **k: {
+        "id": "demo", "kind": "python", "run": lambda **kwargs: calls.append(kwargs)
+    })
+    before = _tree(dataset)
+    out = alias / "separate-output"
+    assert cli.main(["run", "demo", "--dataset", str(dataset), "--out", str(out),
+                     "--work", str(alias / "separate-work"), "--dry-run"]) == 0
+    assert len(calls) == 1 and _tree(dataset) == before
+    assert len(list((out / "_runs").glob("*.json"))) == 1
