@@ -112,6 +112,11 @@ Current caveat for this public core version:
 ### Resultbundle inspection and validation
 
 For stronger producer-to-consumer interoperability, emit a `resultbundle.json` sidecar with at least `resultbundle_type`, `schema_version`, `time_reference`, and `files[]`.
+Each file entry requires `path`, `role`, `format` and boolean `required`; the time
+reference requires `kind` and `unit`. Declare optional `files[].sha256` to verify
+payload integrity during validation with resolved files. Hash-free bundles remain
+supported; generic validation does not establish table/time semantics or producer
+authenticity.
 
 ```bash
 mdivicom resultbundles inspect --sidecar /path/to/resultbundle.json --out-dir /path/to/run_out
@@ -124,9 +129,9 @@ mdivicom resultbundles policies
 ```
 
 Validation modes:
-- `strict`: fail on invalid envelope, missing required files, or incompatible type/version
-- `warn`: continue with explicit warnings for softer compatibility issues
-- `off`: skip validation checks
+- `strict`: fail on invalid envelope, missing required files, declared-hash issues, or incompatible type/version
+- `warn`: warn on integrity/missing-file/compatibility issues; structural envelope errors remain errors
+- `off`: skip validation checks (the CLI still loads/resolves the sidecar)
 
 See `docs/resultbundle_runtime_integration.md` for the fuller contract and policy profiles.
 

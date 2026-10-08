@@ -236,6 +236,12 @@ Minimum required fields:
 - `time_reference`
 - `files[]`
 
+The identifiers above must be non-empty strings; `time_reference` must be an
+object with non-empty `kind` and `unit` strings. `files` must be a non-empty array,
+and each entry requires non-empty string `path`, `role`, `format` and boolean
+`required`. An optional `sha256` must contain exactly 64 ASCII hexadecimal
+characters; validation with resolved payloads verifies the declared file bytes.
+
 Recommended fields:
 - `source_scope`
 - `producer`
@@ -255,12 +261,20 @@ Practical rules:
 Current validation is intentionally lean:
 - validate the basic bundle structure
 - check detached-sidecar path portability
-- check required files
+- check required files and declared SHA-256 integrity of resolved payloads
 - optionally check type/version compatibility
 - defer per-type join and time-key validation
 - allow unknown extra fields and columns
 
 This keeps the handoff layer useful without pretending that the current draft already standardizes every derived-output family in detail.
+
+Hash-free bundles remain supported. Missing optional files are permitted and their
+hashes are reported as unverified. Hash issues fail `strict`, warn in `warn`, and
+are skipped in `off`; structural errors still fail `warn`. Envelope-only Python
+validation cannot verify payload bytes. See
+[resultbundle runtime integration](resultbundle_runtime_integration.md) for the
+exact scope; passing generic validation does not establish table/time semantics
+or producer authenticity.
 
 ## Core Data vs Tool-Specific Packages
 

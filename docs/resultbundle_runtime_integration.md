@@ -33,6 +33,36 @@ CLI surface:
 - `mdivicom resultbundles validate ...`
 - `mdivicom resultbundles policies [--json]`
 
+## Minimum envelope and exact validation scope
+
+Required envelope keys are `resultbundle_type` and `schema_version` (non-empty
+strings), `time_reference` (object with non-empty `kind` and `unit` strings), and
+`files` (non-empty array). Each file entry requires `path`, `role` and `format`
+(non-empty strings) plus `required` (boolean). Null placeholders do not satisfy
+these fields. Unknown extra fields remain allowed.
+
+`files[].sha256` is optional. When declared, it must be exactly 64 ASCII hexadecimal
+characters, with either letter case accepted. With resolved payloads, validation
+streams the actual enclosed regular file and compares its SHA-256. A malformed
+hash, mismatch or unreadable/non-regular present payload is an error in `strict`
+and a warning in `warn`. Paths outside the payload root are not read for hashing,
+even in `warn`. An absent optional file remains permitted and is noted as
+unverified; missing required files fail strict validation. Hash-free bundles
+retain their existing behavior. `off` skips envelope and integrity checks.
+
+The CLI still loads/resolves the sidecar in every mode. `inspect` and
+`resolve_sidecar(...)` alone do not verify content hashes. Python callers should
+pass `resolved` to `validate_envelope(resolved.sidecar, resolved=resolved)`;
+envelope-only calls check structure/hash syntax and note that payload hashes
+were not verified. Structural envelope errors remain errors in `warn`.
+
+With resolved data, strict validation covers envelope/file structure, relative
+payload containment, portable detached roots, required-file presence and declared
+hash integrity. Type/version compatibility is a separate API check, or is added
+by CLI compatibility flags. Validation does not parse tables, verify time/join
+keys, interpret domain types, establish scientific validity or authenticate the
+producer. Hashes check declared bytes, not those semantic properties.
+
 ## Recommended Integration Seam
 
 Primary seam for non-Python or R pipelines:
