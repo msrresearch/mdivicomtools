@@ -100,6 +100,9 @@ def _validate_file_hashes(report: ValidationReport, files_value: Any, resolved: 
         if resolved is None:
             report.add_note(f"SHA-256 not verified without resolved payload files: {declared}")
             continue
+        if not resolved.payload_root_contained:
+            issue(f"SHA-256 not verified: payload root violates its declared base: {declared}")
+            continue
         item = by_path.get(declared) if isinstance(declared, str) else None
         if item is None:
             issue(f"SHA-256 cannot be verified for an unresolved file: {declared}")

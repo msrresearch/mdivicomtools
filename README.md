@@ -115,7 +115,7 @@ For stronger producer-to-consumer interoperability, emit a `resultbundle.json` s
 Each file entry requires `path`, `role`, `format` and boolean `required`; the time
 reference requires `kind` and `unit`. Declare optional `files[].sha256` to verify
 payload integrity during validation with resolved files. Hash-free bundles remain
-supported; generic validation does not establish table/time semantics or producer
+supported; generic validation does not establish table/time semantics, scientific validity or producer
 authenticity.
 
 ```bash

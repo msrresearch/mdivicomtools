@@ -213,3 +213,108 @@ def test_required_envelope_fields_cannot_use_null_placeholders(tmp_path, field, 
         sidecar["files"][0][field] = None
     report = validate_envelope(sidecar, mode=mode)
     assert not report.valid and report.errors  # structure errors stay fatal in warn mode
+
+
+@pytest.mark.parametrize("root_kind", ["relative", "absolute", "symlink"])
+@pytest.mark.parametrize("mode", ["strict", "warn"])
+def test_escaped_source_root_is_never_hashed(tmp_path, monkeypatch, capsys, root_kind, mode):
+    path, out, payload, sidecar = _bundle(tmp_path, detached=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "payload.txt").write_bytes(b"abc")
+    if root_kind == "relative":
+        root = "../outside"
+    elif root_kind == "absolute":
+        root = str(outside)
+    else:
+        alias = out / "outside-alias"
+        try:
+            alias.symlink_to(outside, target_is_directory=True)
+        except OSError as exc:
+            pytest.skip(f"Directory symlinks unavailable: {exc}")
+        root = "outside-alias"
+    sidecar["source"]["root"] = root
+    _write_json(path, sidecar)
+    resolved = resolve_sidecar(path, out_dir=out, strict=False)
+    original = Path.open
+    def no_escaped_open(self, *args, **kwargs):
+        assert self.resolve() != outside / "payload.txt", "Escaped payload was opened"
+        return original(self, *args, **kwargs)
+    monkeypatch.setattr(Path, "open", no_escaped_open)
+    report = validate_envelope(resolved.sidecar, resolved=resolved, mode=mode)
+    assert report.valid is (mode == "warn")
+    assert any("SHA-256 not verified: payload root" in msg for msg in report.errors + report.warnings)
+    assert not any("Verified SHA-256" in note for note in report.notes)
+    assert resolved.payload_root_contained is False
+    if mode == "warn":
+        code = cli.main(["resultbundles", "validate", "--sidecar", str(path),
+                         "--out-dir", str(out), "--mode", mode, "--json"])
+        output = json.loads(capsys.readouterr().out)
+        assert code == 0 and output["validation"] == report.to_dict()
+
+
+def test_explicit_absolute_base_is_declared_not_an_escape(tmp_path):
+    path, out, payload, sidecar = _bundle(tmp_path, detached=True)
+    sidecar["source"] = {"root": str(payload.parent), "root_base": "absolute"}
+    _write_json(path, sidecar)
+    resolved = resolve_sidecar(path, strict=False)
+    report = validate_envelope(resolved.sidecar, resolved=resolved, mode="warn")
+    assert resolved.payload_root_contained is True
+    assert report.valid and any("Verified SHA-256" in note for note in report.notes)
+
+
+@pytest.mark.parametrize("mode", ["strict", "warn"])
+def test_unreadable_payload_parent_reports_json_issue(tmp_path, capsys, mode):
+    if os.name == "nt" or not hasattr(os, "geteuid") or os.geteuid() == 0:
+        pytest.skip("Requires POSIX permissions as a non-root user")
+    path, out, payload, sidecar = _bundle(tmp_path, detached=True, required=False)
+    payload.parent.chmod(0)
+    try:
+        report = _validate(path, out, mode)
+        assert report.valid is (mode == "warn")
+        assert any("PermissionError" in msg for msg in report.errors + report.warnings)
+        assert not any("Optional payload absent" in note for note in report.notes)
+        code = cli.main(["resultbundles", "validate", "--sidecar", str(path),
+                         "--out-dir", str(out), "--mode", mode, "--json"])
+        assert code == (1 if mode == "strict" else 0)
+        assert json.loads(capsys.readouterr().out)["validation"] == report.to_dict()
+    finally:
+        payload.parent.chmod(0o755)
+
+
+@pytest.mark.parametrize("mode", ["strict", "warn"])
+def test_resolver_exists_error_reaches_hash_validation(tmp_path, monkeypatch, mode):
+    path, out, payload, sidecar = _bundle(tmp_path, detached=True, required=False)
+    original = Path.exists
+    def denied(self):
+        if self == payload:
+            raise PermissionError("Pre-3.14 exists() behavior")
+        return original(self)
+    monkeypatch.setattr(Path, "exists", denied)
+    resolved = resolve_sidecar(path, out_dir=out)
+    assert resolved.files[0].exists is False
+    original_stat = Path.stat
+    def denied_stat(self, *args, **kwargs):
+        if self == payload:
+            raise PermissionError("Payload metadata unreadable")
+        return original_stat(self, *args, **kwargs)
+    monkeypatch.setattr(Path, "stat", denied_stat)
+    report = validate_envelope(resolved.sidecar, resolved=resolved, mode=mode)
+    assert report.valid is (mode == "warn")
+    assert any("PermissionError" in msg for msg in report.errors + report.warnings)
+
+
+@pytest.mark.parametrize("mode", ["strict", "warn"])
+def test_sidecar_access_error_is_a_cli_json_error(tmp_path, monkeypatch, capsys, mode):
+    path, out, payload, sidecar = _bundle(tmp_path)
+    original = Path.exists
+    def denied(self):
+        if self == path:
+            raise PermissionError("Sidecar metadata unreadable")
+        return original(self)
+    monkeypatch.setattr(Path, "exists", denied)
+    code = cli.main(["resultbundles", "validate", "--sidecar", str(path), "--mode", mode, "--json"])
+    assert code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output["validation"]["valid"] is False
+    assert any("PermissionError" in msg for msg in output["validation"]["errors"])

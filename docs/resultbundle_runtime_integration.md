@@ -45,9 +45,11 @@ these fields. Unknown extra fields remain allowed.
 characters, with either letter case accepted. With resolved payloads, validation
 streams the actual enclosed regular file and compares its SHA-256. A malformed
 hash, mismatch or unreadable/non-regular present payload is an error in `strict`
-and a warning in `warn`. Paths outside the payload root are not read for hashing,
-even in `warn`. An absent optional file remains permitted and is noted as
-unverified; missing required files fail strict validation. Hash-free bundles
+and a warning in `warn`. Files outside the payload root and files under a root
+that violates its declared base are not read for hashing, even in `warn` or after
+non-strict resolution followed by strict validation. An absent optional file
+remains permitted and, when a hash is declared, is noted as unverified; missing
+required files fail strict validation. Hash-free bundles
 retain their existing behavior. `off` skips envelope and integrity checks.
 
 The CLI still loads/resolves the sidecar in every mode. `inspect` and
@@ -61,7 +63,9 @@ payload containment, portable detached roots, required-file presence and declare
 hash integrity. Type/version compatibility is a separate API check, or is added
 by CLI compatibility flags. Validation does not parse tables, verify time/join
 keys, interpret domain types, establish scientific validity or authenticate the
-producer. Hashes check declared bytes, not those semantic properties.
+producer. Hashes check declared bytes, not those semantic properties. Only declared
+entries are examined; undeclared extra files are ignored. Hash-free required entries
+receive existence checks, not regular-file checks.
 
 ## Recommended Integration Seam
 

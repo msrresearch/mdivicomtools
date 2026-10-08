@@ -27,6 +27,7 @@ class ResolvedSidecar:
     files: List[ResolvedFile] = field(default_factory=list)
     issues: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    payload_root_contained: bool = True
 
     def to_dict(self) -> Dict[str, Any]:
         return {

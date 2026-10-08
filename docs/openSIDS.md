@@ -268,13 +268,13 @@ Current validation is intentionally lean:
 
 This keeps the handoff layer useful without pretending that the current draft already standardizes every derived-output family in detail.
 
-Hash-free bundles remain supported. Missing optional files are permitted and their
-hashes are reported as unverified. Hash issues fail `strict`, warn in `warn`, and
+Hash-free bundles remain supported. Missing optional files are permitted;
+any declared hashes are reported as unverified. Hash issues fail `strict`, warn in `warn`, and
 are skipped in `off`; structural errors still fail `warn`. Envelope-only Python
 validation cannot verify payload bytes. See
 [resultbundle runtime integration](resultbundle_runtime_integration.md) for the
-exact scope; passing generic validation does not establish table/time semantics
-or producer authenticity.
+exact scope; passing generic validation does not establish table/time semantics,
+scientific validity or producer authenticity.
 
 ## Core Data vs Tool-Specific Packages
 
