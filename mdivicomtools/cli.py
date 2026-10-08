@@ -93,11 +93,15 @@ def _cmd_plugins_info(args: argparse.Namespace) -> int:
 
 def _cmd_run(args: argparse.Namespace) -> int:
     plugin_ref = PluginRef.parse(args.plugin_ref)
-    plugin = get_plugin(plugin_ref, resolve_execution=True)
-
     dataset_dir = Path(args.dataset).expanduser().resolve()
     out_dir = Path(args.out).expanduser().resolve()
     work_dir = Path(args.work).expanduser().resolve() if args.work else None
+    for option, writable in (("--out", out_dir), ("--work", work_dir)):
+        if writable is not None and (
+            writable == dataset_dir or writable in dataset_dir.parents or dataset_dir in writable.parents
+        ):
+            raise SystemExit(f"{option} must be disjoint from --dataset (not equal, inside, or a parent).")
+    plugin = get_plugin(plugin_ref, resolve_execution=True)
     config = _parse_config(args.config)
 
     out_dir.mkdir(parents=True, exist_ok=True)

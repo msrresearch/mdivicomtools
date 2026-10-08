@@ -6,6 +6,9 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Fixed
+- Reject resolved input/output/work-directory overlap before CLI plugin loading, output creation or run-record writes, including dry runs and symlink aliases.
+
 ## [0.3.0] - 2026-04-15
 
 ### Added

@@ -89,6 +89,17 @@ mdivicom plugins list
 mdivicom plugins info <plugin_id>
 ```
 
+### Run a Python plugin
+
+```bash
+mdivicom run <plugin_id> --dataset /path/to/input --out /path/to/run_out
+```
+
+Choose an isolated `--out` and optional `--work`: neither may equal, sit inside,
+or contain `--dataset`. The CLI resolves symlinks and rejects overlap before
+loading the plugin or writing directories/run records. A valid `--dry-run` still
+creates the output root and its `_runs/<run_id>.json` record.
+
 ### Container plugin preview
 
 The expected container-lane command shape and current runtime caveats are documented in:
