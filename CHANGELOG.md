@@ -6,6 +6,16 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-12
+
+### Fixed
+- Skip hash reads when detached roots violate their declared base in warn/mixed modes, including absolute roots under relative bases; report sidecar/payload permission and name-length errors as structured outcomes on older Python versions.
+- Add the defaulted `ResolvedSidecar.payload_root_contained` attribute for resolver source issues; existing `to_dict()` keys are unchanged, while dataclass equality and `asdict()` include the attribute.
+- Verify declared SHA-256 values against resolved enclosed regular payloads in strict/warn validation; preserve hash-free bundles and explicitly report absent optional or unresolved hashes.
+- Reject null required-envelope/file-field placeholders and document exact structural, containment and integrity checks without per-type semantic claims.
+- Reject resolved input/output/work-directory overlap before CLI plugin loading, output creation or run-record writes, including dry runs and symlink, case, Unicode-normalization and mount aliases of the dataset or its ancestors. Mounts exposing only a subdirectory inside the dataset are outside this guard.
+- Correct the release version-bump script to avoid a reserved awk variable.
+
 ## [0.3.0] - 2026-04-15
 
 ### Added

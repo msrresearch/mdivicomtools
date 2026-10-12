@@ -75,6 +75,8 @@ Conventions:
 - `out_dir` is the output root passed in by the caller.
   - In the current public CLI, `--out` is forwarded directly to the plugin run function.
   - Callers should therefore choose an isolated output path per run/plugin rather than relying on automatic nesting by the core.
+  - The CLI resolves symlinks and checks filesystem identity to reject `--out` or `--work` equal to, inside, or containing `--dataset`, before plugin loading or directory/run-record writes.
+- A valid CLI `--dry-run` still creates the output root and `_runs/<run_id>.json`; the plugin receives `dry_run=True`. Rejected overlap creates neither.
 - Dataset-producing plugins SHOULD write an openSIDS dataset view under: `<out_dir>/dataset/**`.
 - Plugins SHOULD write a plugin-level provenance record under: `<out_dir>/provenance.json`.
 

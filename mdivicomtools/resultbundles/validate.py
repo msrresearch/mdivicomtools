@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import re
+import stat
+from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .resolve import _is_within
 from .types import ResolvedSidecar, ValidationReport
 
 
@@ -61,21 +66,72 @@ def _validate_files_structure(report: ValidationReport, files_value: Any) -> Non
             if key not in entry:
                 report.add_error(f"files[{idx}] is missing required key '{key}'.")
         path_value = entry.get("path")
-        if path_value is not None and (not isinstance(path_value, str) or not path_value.strip()):
+        if "path" in entry and (not isinstance(path_value, str) or not path_value.strip()):
             report.add_error(f"files[{idx}].path must be a non-empty string.")
         role_value = entry.get("role")
-        if role_value is not None and (not isinstance(role_value, str) or not role_value.strip()):
+        if "role" in entry and (not isinstance(role_value, str) or not role_value.strip()):
             report.add_error(f"files[{idx}].role must be a non-empty string.")
         format_value = entry.get("format")
-        if format_value is not None and (not isinstance(format_value, str) or not format_value.strip()):
+        if "format" in entry and (not isinstance(format_value, str) or not format_value.strip()):
             report.add_error(f"files[{idx}].format must be a non-empty string.")
 
         required_value = entry.get("required")
-        if required_value is None:
+        if "required" not in entry:
             continue
         if isinstance(required_value, bool):
             continue
         report.add_error(f"files[{idx}].required must be a boolean.")
+
+
+def _validate_file_hashes(report: ValidationReport, files_value: Any, resolved: Optional[ResolvedSidecar]) -> None:
+    """Check declared hashes against the resolved, enclosed regular payloads."""
+    if not isinstance(files_value, list):
+        return
+    by_path = {item.declared_path: item for item in resolved.files} if resolved is not None else {}
+    issue = report.add_error if report.mode == "strict" else report.add_warning
+    for idx, entry in enumerate(files_value):
+        if not isinstance(entry, dict) or "sha256" not in entry:
+            continue
+        expected = entry["sha256"]
+        if not isinstance(expected, str) or re.fullmatch(r"[0-9a-fA-F]{64}", expected) is None:
+            issue(f"files[{idx}].sha256 must be exactly 64 hexadecimal characters.")
+            continue
+        declared = entry.get("path")
+        if resolved is None:
+            report.add_note(f"SHA-256 not verified without resolved payload files: {declared}")
+            continue
+        if not resolved.payload_root_contained:
+            issue(f"SHA-256 not verified: payload root violates its declared base: {declared}")
+            continue
+        item = by_path.get(declared) if isinstance(declared, str) else None
+        if item is None:
+            issue(f"SHA-256 cannot be verified for an unresolved file: {declared}")
+            continue
+        try:
+            payload = Path(item.resolved_path).resolve()
+            if not _is_within(payload, Path(resolved.payload_root).resolve()):
+                issue(f"SHA-256 not verified outside the payload root: {declared}")
+                continue
+            if not stat.S_ISREG(payload.stat().st_mode):
+                issue(f"SHA-256 requires an existing regular payload file: {declared}")
+                continue
+            digest = hashlib.sha256()
+            with payload.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        except FileNotFoundError:
+            if not item.required:
+                report.add_note(f"Optional payload absent; SHA-256 not verified: {declared}")
+            else:
+                issue(f"SHA-256 cannot be verified for a missing required file: {declared}")
+            continue
+        except (OSError, RuntimeError) as exc:
+            issue(f"SHA-256 cannot be verified for {declared}: {type(exc).__name__}")
+            continue
+        if digest.hexdigest() != expected.lower():
+            issue(f"SHA-256 mismatch: {declared}")
+        else:
+            report.add_note(f"Verified SHA-256: {declared}")
 
 
 def validate_envelope(
@@ -100,11 +156,11 @@ def validate_envelope(
             report.add_error(f"Missing required top-level key '{key}'.")
 
     resultbundle_type = sidecar.get("resultbundle_type")
-    if resultbundle_type is not None and (not isinstance(resultbundle_type, str) or not resultbundle_type.strip()):
+    if "resultbundle_type" in sidecar and (not isinstance(resultbundle_type, str) or not resultbundle_type.strip()):
         report.add_error("resultbundle_type must be a non-empty string.")
 
     schema_version = sidecar.get("schema_version")
-    if schema_version is not None and (not isinstance(schema_version, str) or not schema_version.strip()):
+    if "schema_version" in sidecar and (not isinstance(schema_version, str) or not schema_version.strip()):
         report.add_error("schema_version must be a non-empty string.")
 
     if "time_reference" in sidecar:
@@ -142,4 +198,5 @@ def validate_envelope(
                 else:
                     report.add_warning(message)
 
+    _validate_file_hashes(report, sidecar.get("files"), resolved)
     return report

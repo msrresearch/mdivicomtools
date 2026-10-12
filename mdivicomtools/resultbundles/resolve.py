@@ -137,15 +137,16 @@ def resolve_sidecar(
     strict: bool = True,
 ) -> ResolvedSidecar:
     sidecar_path = Path(sidecar_path).expanduser().resolve(strict=False)
-    if not sidecar_path.exists():
-        raise ResultBundleResolutionError(f"Sidecar does not exist: {sidecar_path}")
-    if not sidecar_path.is_file():
-        raise ResultBundleResolutionError(f"Sidecar path is not a file: {sidecar_path}")
-
     try:
+        if not sidecar_path.exists():
+            raise ResultBundleResolutionError(f"Sidecar does not exist: {sidecar_path}")
+        if not sidecar_path.is_file():
+            raise ResultBundleResolutionError(f"Sidecar path is not a file: {sidecar_path}")
         sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ResultBundleResolutionError(f"Could not parse sidecar JSON: {exc}") from exc
+    except OSError as exc:
+        raise ResultBundleResolutionError(f"Could not read sidecar: {type(exc).__name__}: {sidecar_path}") from exc
 
     if not isinstance(sidecar, dict):
         raise ResultBundleResolutionError("Sidecar JSON must be an object.")
@@ -174,6 +175,7 @@ def resolve_sidecar(
         sidecar=sidecar,
         source=source,
         warnings=normalization_warnings,
+        payload_root_contained=not source_issues,
     )
     resolved.issues.extend(source_issues)
 
@@ -216,6 +218,11 @@ def resolve_sidecar(
                     raise ResultBundleResolutionError(message)
                 resolved.issues.append(message)
 
+        try:
+            exists = resolved_path.exists()
+        except OSError:
+            exists = False  # Hash validation reports stat/read failures separately from absence.
+
         resolved.files.append(
             ResolvedFile(
                 declared_path=declared,
@@ -223,7 +230,7 @@ def resolve_sidecar(
                 role=str(item.get("role", "")),
                 format=str(item.get("format", "")),
                 required=bool(item.get("required", False)),
-                exists=resolved_path.exists(),
+                exists=exists,
             )
         )
 

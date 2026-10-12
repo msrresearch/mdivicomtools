@@ -54,11 +54,11 @@ conda activate mdivicomtools
 
 ```
 
-For the public `v0.3.0` release, install the core from a pinned Git tag:
+For the public `v0.3.1` release, install the core from a pinned Git tag:
 
 ```bash
 pip install -U pip
-pip install git+https://github.com/msrresearch/mdivicomtools.git@v0.3.0
+pip install git+https://github.com/msrresearch/mdivicomtools.git@v0.3.1
 ```
 
 ### Install plugins (optional)
@@ -89,6 +89,17 @@ mdivicom plugins list
 mdivicom plugins info <plugin_id>
 ```
 
+### Run a Python plugin
+
+```bash
+mdivicom run <plugin_id> --dataset /path/to/input --out /path/to/run_out
+```
+
+Choose an isolated `--out` and optional `--work`: neither may equal, sit inside,
+or contain `--dataset`. The CLI resolves symlinks and checks filesystem identity to reject overlap before
+loading the plugin or writing directories/run records. A valid `--dry-run` still
+creates the output root and its `_runs/<run_id>.json` record.
+
 ### Container plugin preview
 
 The expected container-lane command shape and current runtime caveats are documented in:
@@ -101,6 +112,11 @@ Current caveat for this public core version:
 ### Resultbundle inspection and validation
 
 For stronger producer-to-consumer interoperability, emit a `resultbundle.json` sidecar with at least `resultbundle_type`, `schema_version`, `time_reference`, and `files[]`.
+Each file entry requires `path`, `role`, `format` and boolean `required`; the time
+reference requires `kind` and `unit`. Declare optional `files[].sha256` to verify
+payload integrity during validation with resolved files. Hash-free bundles remain
+supported; generic validation does not establish table/time semantics, scientific validity or producer
+authenticity.
 
 ```bash
 mdivicom resultbundles inspect --sidecar /path/to/resultbundle.json --out-dir /path/to/run_out
@@ -113,9 +129,9 @@ mdivicom resultbundles policies
 ```
 
 Validation modes:
-- `strict`: fail on invalid envelope, missing required files, or incompatible type/version
-- `warn`: continue with explicit warnings for softer compatibility issues
-- `off`: skip validation checks
+- `strict`: fail on invalid envelope, missing required files, declared-hash issues, or incompatible type/version
+- `warn`: warn on integrity/missing-file/compatibility issues; structural envelope errors remain errors
+- `off`: skip validation checks (the CLI still loads/resolves the sidecar)
 
 See `docs/resultbundle_runtime_integration.md` for the fuller contract and policy profiles.
 
