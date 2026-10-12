@@ -54,11 +54,11 @@ conda activate mdivicomtools
 
 ```
 
-For the public `v0.3.0` release, install the core from a pinned Git tag:
+For the public `v0.3.1` release, install the core from a pinned Git tag:
 
 ```bash
 pip install -U pip
-pip install git+https://github.com/msrresearch/mdivicomtools.git@v0.3.0
+pip install git+https://github.com/msrresearch/mdivicomtools.git@v0.3.1
 ```
 
 ### Install plugins (optional)

@@ -144,13 +144,13 @@ CHANGELOG
   local tmp
   tmp="$(mktemp)"
 
-  awk -v next="$next_version" -v d="$today" '
+  awk -v release_version="$next_version" -v d="$today" '
     BEGIN {inserted=0}
     {
       print $0
       if (!inserted && $0 ~ /^## \[Unreleased\]/) {
         print ""
-        print "## [" next "] - " d
+        print "## [" release_version "] - " d
         print ""
         print "### Added"
         print "- "
